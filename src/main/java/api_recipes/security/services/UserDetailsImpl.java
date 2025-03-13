@@ -44,6 +44,21 @@ public class UserDetailsImpl implements UserDetails {
 
     //getters id, username, email, password, roles
 
+    @Override // Este metodo debe ser explícito debido a la interfaz UserDetails
+    public String getUsername() {
+        return username;
+    }
+
+    @Override // Lo mismo para getPassword
+    public String getPassword() {
+        return password;
+    }
+
+    @Override // Y para getAuthorities
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
     @Override
     public boolean isAccountNonExpired() { return true; }
 
