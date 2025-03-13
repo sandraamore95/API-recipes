@@ -128,7 +128,7 @@ public class AuthController {
 
         user.setRoles(roles);
         userRepository.save(user);
-        return ResponseEntity.ok(user); // Devuelve el usuario registrado con éxito
+        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));// Devuelve el usuario registrado con éxito
     }
 
 }
