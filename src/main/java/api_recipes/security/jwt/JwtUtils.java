@@ -1,4 +1,4 @@
-package api_recipes.jwt;
+package api_recipes.security.jwt;
 import api_recipes.security.services.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
