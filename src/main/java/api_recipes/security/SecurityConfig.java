@@ -69,12 +69,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/test/public/**"
+                                "/api/test/public/**","api/users/**"
                         ).permitAll()
 
                         // Endpoints con restricciones de roles
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

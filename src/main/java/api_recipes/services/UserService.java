@@ -4,7 +4,6 @@ import api_recipes.models.User;
 import api_recipes.payload.dto.UserDto;
 import api_recipes.repository.UserRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
