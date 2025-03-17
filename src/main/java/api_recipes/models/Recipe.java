@@ -2,6 +2,9 @@ package api_recipes.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
+
 @Entity
 @Table(name = "recipes")
 @Getter
@@ -24,6 +27,7 @@ public class Recipe {
     @Column(nullable = false)
     private Category category;
 
+    //lista de ingredientes (entidad)
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ingredient> ingredients;
 
