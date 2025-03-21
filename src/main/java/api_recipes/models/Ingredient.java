@@ -2,6 +2,9 @@ package api_recipes.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "ingredients")
 @Getter
@@ -19,8 +22,7 @@ public class Ingredient {
 
     private String quantity;
 
-    //relacion con Receta
-    @ManyToOne
-    @JoinColumn(name = "recipe_id", nullable = false)
-    private Recipe recipe;
+    //relacion con Receta -> ingrediente en multiples recetas
+    @ManyToMany(mappedBy = "ingredients")
+    private Set<Recipe> recipes = new HashSet<>();
 }
