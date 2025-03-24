@@ -2,10 +2,7 @@ package api_recipes.models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "recipes")
@@ -25,35 +22,28 @@ public class Recipe {
     @Column(length = 1000)
     private String description;
 
+    @Column(length = 1000)
+    private String preparation;
+
+    @Enumerated(EnumType.STRING)
+    private RecipeStatus status = RecipeStatus.PENDING; // Estado inicial
+
     @ElementCollection(targetClass = Category.class)
     @CollectionTable(name = "recipe_categories", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "category", nullable = false)
     @Enumerated(EnumType.STRING)
     private Set<Category> categories = new HashSet<>();
 
-    //lista de ingredientes (entidad)
-    @ManyToMany
-    @JoinTable(
-            name = "recipe_ingredients",
-            joinColumns = @JoinColumn(name = "recipe_id"),
-            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
-    )
-    private Set<Ingredient> ingredients = new HashSet<>();
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;  // Usuario que creó la receta
 
 
-    public void addIngredient(Ingredient ingredient) {
-        ingredients.add(ingredient);
-        ingredient.getRecipes().add(this);
-    }
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 
-    public void removeIngredient(Ingredient ingredient) {
-        ingredients.remove(ingredient);
-        ingredient.getRecipes().remove(this);
-    }
     public void addCategory(Category category) {
         categories.add(category);
     }
@@ -71,6 +61,9 @@ public class Recipe {
     }
     public enum Category {
         SALUDABLE, SENCILLA, CENAR, COMER, POSTRE, VEGETARIANA,DESAYUNO
+    }
+    public enum RecipeStatus {
+        PENDING, APPROVED, REJECTED
     }
 
 }
