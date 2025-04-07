@@ -5,6 +5,8 @@ import api_recipes.services.RecipeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -44,8 +46,9 @@ public class RecipeController {
     @PostMapping
     public ResponseEntity<RecipeDto> createRecipe(
             @Valid @RequestBody RecipeRequest recipeRequest,
-            @RequestParam Long userId) {
-        RecipeDto createdRecipe = recipeService.createRecipe(recipeRequest, userId);
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String username=userDetails.getUsername();
+        RecipeDto createdRecipe = recipeService.createRecipe(recipeRequest,username );
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRecipe);
     }
 }

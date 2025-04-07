@@ -52,7 +52,7 @@ public class RecipeService {
     }
 
    //crear receta
-    public RecipeDto createRecipe(@Valid RecipeRequest recipeRequest, Long userId) {
+    public RecipeDto createRecipe(@Valid RecipeRequest recipeRequest, String username) {
 
         // 1️⃣ Verificar si la receta ya existe
         if (recipeRepository.findByTitle(recipeRequest.getTitle()).isPresent()) {
@@ -60,7 +60,7 @@ public class RecipeService {
         }
 
         // 2️⃣ Obtener el usuario creador de la receta
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
 
