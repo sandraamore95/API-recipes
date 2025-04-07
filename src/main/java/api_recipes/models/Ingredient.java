@@ -12,7 +12,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class Ingredient {
 
-    @Id
+    @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
