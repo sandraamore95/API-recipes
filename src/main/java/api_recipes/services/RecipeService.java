@@ -1,7 +1,9 @@
 package api_recipes.services;
 import api_recipes.mapper.RecipeMapper;
 import api_recipes.models.*;
+import api_recipes.payload.dto.IngredientDto;
 import api_recipes.payload.dto.RecipeDto;
+import api_recipes.payload.request.RecipeIngredientRequest;
 import api_recipes.payload.request.RecipeRequest;
 import api_recipes.repository.CategoryRepository;
 import api_recipes.repository.IngredientRepository;
@@ -9,6 +11,8 @@ import api_recipes.repository.RecipeRepository;
 import api_recipes.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +62,14 @@ public class RecipeService {
         // 2️⃣ Obtener el usuario creador de la receta
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+
+        Set<Long> uniqueIds = new HashSet<>();
+        for (RecipeIngredientRequest req : recipeRequest.getIngredients()) {
+            if (!uniqueIds.add(req.getIngredientId())) {
+                throw new RuntimeException("Ingrediente duplicado con ID " + req.getIngredientId());
+            }
+        }
 
         // 3️⃣ Convertir RecipeRequest a Recipe (sin categorías ni ingredientes aún)
         Recipe recipe = recipeMapper.toEntity(recipeRequest);
