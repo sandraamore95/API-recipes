@@ -19,8 +19,21 @@ public class Ingredient {
     @Column(nullable = false, unique = true)
     private String name;
 
-    private String quantity;
+
+    @Enumerated(EnumType.STRING)
+    private UnitMeasure unit_measure;
 
     @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecipeIngredient> recipeIngredients = new HashSet<>();
+
+    public enum UnitMeasure {
+        GRAMOS,
+        MILILITROS,
+        TAZAS,
+        UNIDADES,
+        LITROS,
+        CUCHARADAS,
+        CUCHARADITAS
+    }
+
 }

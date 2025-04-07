@@ -1,4 +1,5 @@
 package api_recipes.payload.dto;
+import api_recipes.models.Ingredient;
 import lombok.*;
 
 
@@ -7,5 +8,5 @@ import lombok.*;
 public class IngredientDto {
     private Long id;
     private String name;
-    private String quantity;
+    private Ingredient.UnitMeasure unit_measure;
 }
