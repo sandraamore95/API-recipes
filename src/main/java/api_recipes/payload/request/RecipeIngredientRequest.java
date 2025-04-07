@@ -12,5 +12,5 @@ public class RecipeIngredientRequest {
     private Long ingredientId;
 
     @NotBlank(message = "La cantidad es obligatoria")
-    private String quantity;
+    private Double quantity;
 }

@@ -21,5 +21,5 @@ public class RecipeIngredient {
     private Ingredient   ingredient;
 
     @Column(nullable = false)
-    private String quantity;
+    private Double quantity;
 }
