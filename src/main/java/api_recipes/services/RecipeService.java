@@ -12,6 +12,7 @@ import api_recipes.repository.CategoryRepository;
 import api_recipes.repository.IngredientRepository;
 import api_recipes.repository.RecipeRepository;
 import api_recipes.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,17 @@ public class RecipeService {
         return recipeRepository.findById(id)
                 .map(recipeMapper::toDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Receta con el id '" + id + "' no encontrada"));
+    }
+
+    @Transactional
+    public RecipeDto incrementPopularityRecipe(Long id){
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receta con el id '" + id + "' no encontrada"));
+
+        recipe.setPopularity(recipe.getPopularity() + 1);
+        recipeRepository.save(recipe);
+
+        return recipeMapper.toDTO(recipe);
     }
 
     public RecipeDto getRecipeByTitle(String title) {

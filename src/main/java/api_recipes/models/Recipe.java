@@ -24,6 +24,8 @@ public class Recipe {
     @Column(length = 1000)
     private String preparation;
 
+    private int popularity;
+
     @Enumerated(EnumType.STRING)
     private RecipeStatus status = RecipeStatus.PENDING; // Estado inicial
 

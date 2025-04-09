@@ -19,4 +19,6 @@ public interface RecipeRepository  extends JpaRepository <Recipe, Long>{
             "LEFT JOIN FETCH r.recipeIngredients ri " +
             "LEFT JOIN FETCH ri.ingredient")
     Page<Recipe> findAllWithRelationships(Pageable pageable);
+
+
 }

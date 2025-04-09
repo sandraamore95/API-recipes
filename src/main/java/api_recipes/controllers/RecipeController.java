@@ -43,14 +43,14 @@ public class RecipeController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getRecipeById(@PathVariable Long id) {
         try {
+            recipeService.incrementPopularityRecipe(id);
             RecipeDto recipe = recipeService.getRecipeById(id);
-            return ResponseEntity.status(HttpStatus.OK).body(recipe);
+            return ResponseEntity.ok(recipe);
         } catch (ResourceNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
+                    .body(new ErrorResponse("Receta no encontrada", ex.getMessage()));
         }
     }
-
     //  Obtener receta por título
     @GetMapping("/title/{title}")
     public ResponseEntity<?> getRecipeByTitle(@PathVariable String title) {
