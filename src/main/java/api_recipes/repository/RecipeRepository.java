@@ -1,8 +1,11 @@
 package api_recipes.repository;
 import api_recipes.models.Recipe;
-import api_recipes.payload.dto.RecipeDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
 
 import java.util.Optional;
 
@@ -10,4 +13,10 @@ import java.util.Optional;
 public interface RecipeRepository  extends JpaRepository <Recipe, Long>{
 
     Optional<Recipe> findByTitle(String title);
+
+    @Query("SELECT DISTINCT r FROM Recipe r " +
+            "LEFT JOIN FETCH r.categories " +
+            "LEFT JOIN FETCH r.recipeIngredients ri " +
+            "LEFT JOIN FETCH ri.ingredient")
+    Page<Recipe> findAllWithRelationships(Pageable pageable);
 }
