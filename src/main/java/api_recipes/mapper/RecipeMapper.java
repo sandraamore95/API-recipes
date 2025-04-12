@@ -59,6 +59,7 @@ public interface RecipeMapper {
         return recipeIngredients.stream().map(ri -> {
             RecipeIngredientDto dto = new RecipeIngredientDto();
             dto.setIngredientId(ri.getIngredient().getId());
+            dto.setName(ri.getIngredient().getName());
             dto.setQuantity(ri.getQuantity());
             return dto;
         }).collect(Collectors.toSet());
