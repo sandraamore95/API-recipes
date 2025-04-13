@@ -4,6 +4,7 @@ import api_recipes.security.jwt.AuthTokenFilter;
 import api_recipes.security.services.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -67,13 +68,20 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/api/test/public/**","api/users/**","/api/recipes/**","/api/ingredients/**"
-                        ).permitAll()
+                        // Public endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/recipes/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ingredients/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/test/public/**").permitAll()
 
                         // Endpoints con restricciones de roles
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+
+
+                        //  endpoints que requieren autenticación
+                        .requestMatchers(HttpMethod.POST, "/api/recipes").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/recipes/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
