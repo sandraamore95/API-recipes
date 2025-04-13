@@ -14,8 +14,10 @@ import api_recipes.repository.RecipeRepository;
 import api_recipes.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jdk.swing.interop.SwingInterOpUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -125,4 +127,17 @@ public class RecipeService {
         //  Convertir a RecipeDto y devolver
         return recipeMapper.toDTO(savedRecipe);
     }
+
+    //delete
+    public void deleteRecipe(Long recipeId, String username) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrada"));
+
+        if (!recipe.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("No tienes permiso para eliminar esta receta");
+        }
+
+        recipeRepository.delete(recipe);
+    }
+
 }
