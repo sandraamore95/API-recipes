@@ -71,6 +71,7 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers(HttpMethod.GET, "/api/recipes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ingredients/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers("/api/auth/**", "/api/test/public/**").permitAll()
 
                         // Endpoints con restricciones de roles
