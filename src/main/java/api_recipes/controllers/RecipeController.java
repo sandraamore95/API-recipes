@@ -136,6 +136,7 @@ public class RecipeController {
                     .body(new ErrorResponse("Error de validación", ex.getMessage()));
 
         } catch (Exception ex) {
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("Error al actualizar receta", "Ocurrió un error inesperado"));
         }
