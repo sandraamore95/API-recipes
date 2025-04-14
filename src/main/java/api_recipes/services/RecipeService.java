@@ -21,6 +21,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -138,6 +139,84 @@ public class RecipeService {
         }
 
         recipeRepository.delete(recipe);
+    }
+
+    //update
+    @Transactional
+    public RecipeDto updateRecipe(Long recipeId, @Valid RecipeRequest recipeRequest, String username) {
+
+
+        //  Buscar receta existente
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrada con ID: " + recipeId));
+
+        System.out.println(recipe.getUser().getUsername());
+        System.out.println(username);
+
+
+        // Verificar que el usuario sea el creador
+        if (!recipe.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("No tienes permiso para editar esta receta");
+        }
+        System.out.println(recipeRequest.getTitle());
+        System.out.println(recipe.getId().equals(recipeId));
+
+        // Verificar si la receta ya existe y no es su propia reecta
+        Optional<Recipe> existingRecipe = recipeRepository.findByTitle(recipeRequest.getTitle());
+        if (existingRecipe.isPresent() && !existingRecipe.get().getId().equals(recipe.getId())) {
+            System.out.println("Título recibido: " + recipeRequest.getTitle());
+            System.out.println("Título actual: " + recipe.getTitle());
+            System.out.println("ID receta actual: " + recipe.getId());
+            System.out.println("ID receta actual: " + existingRecipe.get().getId());
+
+            throw new ResourceAlreadyExistsException("La receta con el título '" + recipeRequest.getTitle() + "' ya existe.");
+        }
+
+        //  Verificar ingredientes duplicados
+        Set<Long> uniqueIds = new HashSet<>();
+        for (RecipeIngredientRequest req : recipeRequest.getIngredients()) {
+            if (!uniqueIds.add(req.getIngredientId())) {
+                throw new InvalidRequestException("Ingrediente duplicado con ID " + req.getIngredientId());
+            }
+        }
+
+        // Actualizar campos simples
+
+        System.out.println(recipeRequest.getTitle());
+        System.out.println(recipeRequest.getDescription());
+        recipe.setTitle(recipeRequest.getTitle());
+        recipe.setDescription(recipeRequest.getDescription());
+        recipe.setPreparation(recipeRequest.getPreparation());
+        recipe.setStatus(Recipe.RecipeStatus.PENDING);
+
+        //  Actualizar categorías
+        Set<String> requestedNames = new HashSet<>(recipeRequest.getCategories());
+        Set<Category> foundCategories = categoryRepository.findByNameIn(requestedNames);
+
+        if (foundCategories.size() != requestedNames.size()) {
+            Set<String> foundNames = foundCategories.stream().map(Category::getName).collect(Collectors.toSet());
+            requestedNames.removeAll(foundNames);
+            throw new ResourceNotFoundException("Categorías no encontradas: " + String.join(", ", requestedNames));
+        }
+        recipe.setCategories(foundCategories);
+
+        // Eliminar ingredientes antiguos
+        recipe.getRecipeIngredients().clear();
+
+        // Asignamos nuevos ingredientes a recipe-ingredient
+        Set<RecipeIngredient> newIngredients = recipeRequest.getIngredients().stream().map(req -> {
+            Ingredient ingredient = ingredientRepository.findById(req.getIngredientId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con ID " + req.getIngredientId() + " no encontrado"));
+
+            return new RecipeIngredient(null, recipe, ingredient, req.getQuantity());
+        }).collect(Collectors.toSet());
+
+        // Agregar nuevos a la misma instancia de colección
+        recipe.getRecipeIngredients().addAll(newIngredients);
+
+        //  Guardar
+        Recipe updatedRecipe = recipeRepository.save(recipe);
+        return recipeMapper.toDTO(updatedRecipe);
     }
 
 }

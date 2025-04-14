@@ -81,6 +81,7 @@ public class SecurityConfig {
 
                         //  endpoints que requieren autenticación
                         .requestMatchers(HttpMethod.POST, "/api/recipes").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/recipes").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/recipes/**").authenticated()
 
                         .anyRequest().authenticated()

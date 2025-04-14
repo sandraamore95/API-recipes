@@ -54,6 +54,7 @@ public class RecipeController {
                     .body(new ErrorResponse("Receta no encontrada", ex.getMessage()));
         }
     }
+
     //  Obtener receta por título
     @GetMapping("/title/{title}")
     public ResponseEntity<?> getRecipeByTitle(@PathVariable String title) {
@@ -65,7 +66,6 @@ public class RecipeController {
                     .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
         }
     }
-
 
 
     // crear receta
@@ -87,10 +87,13 @@ public class RecipeController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("Error de validación", ex.getMessage()));
         } catch (Exception ex) {
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("Error al crear receta", "Ocurrió un error inesperado"));
         }
     }
+
+
     //delete receta
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRecipe(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
@@ -109,7 +112,33 @@ public class RecipeController {
         }
     }
 
+    //update receta
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateRecipe(@PathVariable Long id, @Valid @RequestBody RecipeRequest recipeRequest,
+                                          @AuthenticationPrincipal UserDetails userDetails) {
 
+        String username = userDetails.getUsername();
+        try {
+            RecipeDto updatedRecipe = recipeService.updateRecipe(id, recipeRequest, username);
+            return ResponseEntity.ok(updatedRecipe);
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResponse("Acceso denegado", ex.getMessage()));
+        } catch (ResourceAlreadyExistsException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("Receta ya existe", ex.getMessage()));
 
+        } catch (InvalidRequestException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Error de validación", ex.getMessage()));
+
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Error al actualizar receta", "Ocurrió un error inesperado"));
+        }
+    }
 }
 
