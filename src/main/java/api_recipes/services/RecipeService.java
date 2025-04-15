@@ -74,17 +74,12 @@ public class RecipeService {
     }
 
     //crear receta
-    public RecipeDto createRecipe(@Valid RecipeRequest recipeRequest, String username) {
+    public RecipeDto createRecipe(@Valid RecipeRequest recipeRequest, User user) {
 
         //  Verificar si la receta ya existe
         if (recipeRepository.findByTitle(recipeRequest.getTitle()).isPresent()) {
             throw new ResourceAlreadyExistsException("La receta con el título '" + recipeRequest.getTitle() + "' ya existe.");
         }
-
-        //  Obtener el usuario creador de la receta
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
         // Verificar ingredientes duplicados
         Set<Long> uniqueIds = new HashSet<>();
         for (RecipeIngredientRequest req : recipeRequest.getIngredients()) {
@@ -115,12 +110,13 @@ public class RecipeService {
     }
 
     //delete
-    public void deleteRecipe(Long recipeId, String username) {
+    @Transactional
+    public void deleteRecipe(Long recipeId, User user) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrada"));
 
-        if (!recipe.getUser().getUsername().equals(username)) {
-            throw new AccessDeniedException("No tienes permiso para eliminar esta receta");
+        if (!recipe.getUser().getId().equals(user.getId())) {
+            throw new InvalidRequestException("No tienes permiso para eliminar esta receta");
         }
 
         recipeRepository.delete(recipe);
@@ -129,14 +125,14 @@ public class RecipeService {
 
     //update
     @Transactional
-    public RecipeDto updateRecipe(Long recipeId, @Valid RecipeRequest recipeRequest, String username) {
+    public RecipeDto updateRecipe(Long recipeId, @Valid RecipeRequest recipeRequest, User user) {
 
         //  Buscar receta existente
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrada con ID: " + recipeId));
 
         // Verificar que el usuario sea el creador
-        if (!recipe.getUser().getUsername().equals(username)) {
+        if (!recipe.getUser().getUsername().equals(user.getUsername())) {
             throw new AccessDeniedException("No tienes permiso para editar esta receta");
         }
 

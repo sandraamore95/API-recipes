@@ -3,9 +3,12 @@ package api_recipes.controllers;
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
+import api_recipes.models.User;
 import api_recipes.payload.dto.RecipeDto;
 import api_recipes.payload.request.RecipeRequest;
 import api_recipes.payload.response.ErrorResponse;
+import api_recipes.repository.UserRepository;
+import api_recipes.security.services.UserDetailsImpl;
 import api_recipes.services.RecipeService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -25,9 +28,11 @@ import java.util.Map;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final UserRepository userRepository;
 
-    public RecipeController(RecipeService recipeService) {
+    public RecipeController(RecipeService recipeService,UserRepository userRepository) {
         this.recipeService = recipeService;
+        this.userRepository=userRepository;
     }
 
     //  Obtener todas las recetas
@@ -72,10 +77,13 @@ public class RecipeController {
     @PostMapping
     public ResponseEntity<?> createRecipe(
             @Valid @RequestBody RecipeRequest recipeRequest,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        String username = userDetails.getUsername();
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
         try {
-            RecipeDto createdRecipe = recipeService.createRecipe(recipeRequest, username);
+            User user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+            RecipeDto createdRecipe = recipeService.createRecipe(recipeRequest, user);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRecipe);
         } catch (ResourceNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -96,9 +104,12 @@ public class RecipeController {
 
     //delete receta
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteRecipe(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> deleteRecipe(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         try {
-            recipeService.deleteRecipe(id, userDetails.getUsername());
+            User user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+            recipeService.deleteRecipe(id, user);
             return ResponseEntity.ok().body(Map.of("message", "Receta eliminada correctamente"));
         } catch (ResourceNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -115,11 +126,13 @@ public class RecipeController {
     //update receta
     @PutMapping("/{id}")
     public ResponseEntity<?> updateRecipe(@PathVariable Long id, @Valid @RequestBody RecipeRequest recipeRequest,
-                                          @AuthenticationPrincipal UserDetails userDetails) {
+                                          @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        String username = userDetails.getUsername();
         try {
-            RecipeDto updatedRecipe = recipeService.updateRecipe(id, recipeRequest, username);
+            User user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+            RecipeDto updatedRecipe = recipeService.updateRecipe(id, recipeRequest, user);
             return ResponseEntity.ok(updatedRecipe);
         } catch (ResourceNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
