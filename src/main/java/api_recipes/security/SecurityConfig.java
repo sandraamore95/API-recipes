@@ -84,6 +84,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/recipes").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/recipes/**").authenticated()
 
+                        // Endpoints de favoritos
+                        .requestMatchers(HttpMethod.GET, "/api/favorites").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/favorites").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
+
+
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
