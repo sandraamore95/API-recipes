@@ -86,6 +86,7 @@ public class SecurityConfig {
 
                         // Endpoints de favoritos
                         .requestMatchers(HttpMethod.GET, "/api/favorites").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/favorites/exists/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/favorites").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
 

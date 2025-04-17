@@ -12,6 +12,5 @@ public class FavoriteDto {
     private Long id;
     private Long userId;
     private String userUsername;
-    private Long recipeId;
-    private String recipeTitle;
+    private RecipeDto recipe;
 }
