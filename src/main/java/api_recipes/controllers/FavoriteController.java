@@ -1,24 +1,17 @@
 package api_recipes.controllers;
-
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
-import api_recipes.models.Favorite;
 import api_recipes.models.User;
 import api_recipes.payload.dto.FavoriteDto;
-import api_recipes.payload.dto.IngredientDto;
-import api_recipes.payload.request.FavoriteRequest;
 import api_recipes.payload.response.ErrorResponse;
 import api_recipes.repository.UserRepository;
 import api_recipes.security.services.UserDetailsImpl;
 import api_recipes.services.FavoriteService;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 

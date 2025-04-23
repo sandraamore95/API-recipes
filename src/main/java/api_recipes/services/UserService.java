@@ -1,9 +1,16 @@
 package api_recipes.services;
+import api_recipes.exceptions.InvalidTokenException;
 import api_recipes.mapper.UserMapper;
+import api_recipes.models.TokenUser;
 import api_recipes.models.User;
 import api_recipes.payload.dto.UserDto;
+import api_recipes.repository.TokenUserRepository;
 import api_recipes.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,10 +20,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final TokenUserRepository tokenUserRepository;
 
-    public UserService(UserRepository userRepository,UserMapper userMapper) {
+
+    public UserService(UserRepository userRepository,UserMapper userMapper,TokenUserRepository tokenUserRepository) {
         this.userRepository = userRepository;
         this.userMapper=userMapper;
+        this.tokenUserRepository=tokenUserRepository;
     }
 
     // Obtener todos los usuarios
@@ -50,4 +60,6 @@ public class UserService {
         }
         return false;
     }
+
+
 }
