@@ -1,5 +1,7 @@
 package api_recipes.controllers;
+import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.InvalidTokenException;
+import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.models.Role;
 import api_recipes.models.User;
@@ -7,8 +9,9 @@ import api_recipes.payload.request.ForgotPasswordRequest;
 import api_recipes.payload.request.LoginRequest;
 import api_recipes.payload.request.ResetPasswordRequest;
 import api_recipes.payload.request.SignupRequest;
+import api_recipes.payload.response.ErrorResponse;
 import api_recipes.payload.response.JwtResponse;
-import api_recipes.payload.response.MessageResponse;
+import api_recipes.payload.response.SuccessResponse;
 import api_recipes.repository.RoleRepository;
 import api_recipes.repository.UserRepository;
 import api_recipes.security.jwt.JwtUtils;
@@ -31,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,7 +68,6 @@ public class AuthController {
     //LOGIN
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        logger.error(loginRequest.getUsername());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -91,14 +92,11 @@ public class AuthController {
 
         // Verificar si el nombre de usuario ya está registrado
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new MessageResponse("Error: ¡El nombre de usuario ya está en uso!"));
+            throw new ResourceAlreadyExistsException("Error: El nombre de usuario ya está en uso");
         }
-
-        // Verificar si el correo electrónico ya está registrado
+        // Verificar si el email ya está registrado
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new MessageResponse("Error: ¡El correo electrónico ya está en uso!"));
+            throw new ResourceAlreadyExistsException("Error: ¡El email  ya está en uso!");
         }
 
         // Crear cuenta de nuevo usuario
@@ -106,53 +104,44 @@ public class AuthController {
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()));
 
-
         // Asignar roles
         Set<String> strRoles = signUpRequest.getRole();
         Set<Role> roles = new HashSet<>();
         if (strRoles == null || strRoles.isEmpty()) {
             // Asignar rol por defecto ROLE_USER
             Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: El rol ROLE_USER no fue encontrado."));
+                    .orElseThrow(() -> new InvalidRequestException("El rol ROLE_USER no fue encontrado."));
             roles.add(userRole);
         } else {
             for (String role : strRoles) {
                 try {
                     Role.RoleName roleName = Role.RoleName.valueOf(role.toUpperCase());
-                    Optional<Role> foundRole = roleRepository.findByName(roleName);
-                    if (foundRole.isEmpty()) {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new MessageResponse("Error: El rol " + role + " no fue encontrado."));
-                    }
-                    roles.add(foundRole.get());
+                    Role foundRole = roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new InvalidRequestException("El rol " + role + " no fue encontrado."));
+                    roles.add(foundRole);
                 } catch (IllegalArgumentException e) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(new MessageResponse("Error: Rol inválido " + role + "."));
+                    throw new InvalidRequestException("Rol inválido: " + role);
                 }
             }
         }
         user.setRoles(roles);
         userRepository.save(user);
-        return ResponseEntity.ok(new MessageResponse("¡Usuario registrado exitosamente!"));
+        return ResponseEntity.ok(new SuccessResponse("¡Usuario registrado exitosamente!"));
     }
-
 
     //forgot password
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
         try {
-            System.out.println(request.getEmail());
             accountService.createPasswordResetTokenForUser(request.getEmail());
-            return ResponseEntity.ok("Se ha enviado un correo para restablecer tu contraseña.");
+            return ResponseEntity.ok(new SuccessResponse("Se ha enviado un correo para restablecer tu contraseña."));
         } catch (ResourceNotFoundException e) {
             // Captura el error cuando el usuario no se encuentra
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new MessageResponse("Error: Usuario no encontrado"));
+                    .body(new ErrorResponse("Usuario no encontrado", e.getMessage()));
         } catch (Exception e) {
-            // Captura cualquier otro error
-            e.printStackTrace();;
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error: Algo salió mal, intenta nuevamente más tarde"));
+                    .body(new ErrorResponse("Error: Algo salió mal, intenta nuevamente más tarde" , e.getMessage()));
         }
     }
 
@@ -166,7 +155,7 @@ public class AuthController {
             return ResponseEntity.ok("Contraseña actualizada correctamente.");
         } catch (InvalidTokenException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new MessageResponse("Error: El token de restablecimiento de contraseña no es válido."));
+                    .body(new SuccessResponse("Error: El token de restablecimiento de contraseña no es válido."));
         }
     }
 
