@@ -1,5 +1,6 @@
 package api_recipes.services;
 
+import api_recipes.exceptions.ExpiredTokenException;
 import api_recipes.exceptions.InvalidTokenException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.models.TokenUser;
@@ -69,11 +70,11 @@ public class AccountService {
 
     public User validatePasswordResetToken(String token) {
         TokenUser resetToken = tokenUserRepository.findByToken(token)
-                .orElseThrow(() -> new InvalidTokenException("El enlace no es válido o ha expirado."));
+                .orElseThrow(() -> new InvalidTokenException("El enlace no es válido."));
 
         if (resetToken.isExpired()) {
             tokenUserRepository.delete(resetToken);
-            throw new InvalidTokenException("El enlace no es válido o ha expirado.");
+            throw new ExpiredTokenException("El enlace ha expirado.");
         }
         return resetToken.getUser();
     }

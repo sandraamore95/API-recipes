@@ -1,5 +1,6 @@
 package api_recipes.controllers;
 import api_recipes.payload.dto.IngredientDto;
+import api_recipes.payload.response.ErrorResponse;
 import api_recipes.services.IngredientService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,9 +20,13 @@ public class IngredientsController {
         this.ingredientService = ingredientService;
     }
         @GetMapping
-        public ResponseEntity<List<IngredientDto>> getAllIngredients(
+        public ResponseEntity<?> getAllIngredients(
                 @RequestParam(required = false) String name) {
+        try{
             return ResponseEntity.ok(ingredientService.searchIngredients(name));
-        }
+        }catch (Exception e) {
+                return ResponseEntity.internalServerError()
+                .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener los ingredientes."));
     }
+    }}
 

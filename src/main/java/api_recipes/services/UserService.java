@@ -2,6 +2,7 @@ package api_recipes.services;
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.InvalidTokenException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
+import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.mapper.UserMapper;
 import api_recipes.models.Role;
 import api_recipes.models.TokenUser;
@@ -70,14 +71,14 @@ public class UserService {
         if (strRoles == null || strRoles.isEmpty()) {
             // Asignar rol por defecto ROLE_USER
             Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
-                    .orElseThrow(() -> new InvalidRequestException("El rol ROLE_USER no fue encontrado."));
+                    .orElseThrow(() -> new ResourceNotFoundException("El rol ROLE_USER no fue encontrado."));
             roles.add(userRole);
         } else {
             for (String role : strRoles) {
                 try {
                     Role.RoleName roleName = Role.RoleName.valueOf(role.toUpperCase());
                     Role foundRole = roleRepository.findByName(roleName)
-                            .orElseThrow(() -> new InvalidRequestException("El rol " + role + " no fue encontrado."));
+                            .orElseThrow(() -> new ResourceNotFoundException("El rol " + role + " no fue encontrado."));
                     roles.add(foundRole);
                 } catch (IllegalArgumentException e) {
                     throw new InvalidRequestException("Rol inválido: " + role);

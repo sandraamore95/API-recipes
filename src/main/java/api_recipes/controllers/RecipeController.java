@@ -6,6 +6,7 @@ import api_recipes.models.User;
 import api_recipes.payload.dto.RecipeDto;
 import api_recipes.payload.request.RecipeRequest;
 import api_recipes.payload.response.ErrorResponse;
+import api_recipes.payload.response.SuccessResponse;
 import api_recipes.repository.UserRepository;
 import api_recipes.security.services.UserDetailsImpl;
 import api_recipes.services.RecipeService;
@@ -18,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -51,9 +51,9 @@ public class RecipeController {
             recipeService.incrementPopularityRecipe(id);
             RecipeDto recipe = recipeService.getRecipeById(id);
             return ResponseEntity.ok(recipe);
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Receta no encontrada", ex.getMessage()));
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
         }
     }
 
@@ -63,9 +63,9 @@ public class RecipeController {
         try {
             RecipeDto recipe = recipeService.getRecipeByTitle(title);
             return ResponseEntity.status(HttpStatus.OK).body(recipe);
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
         }
     }
 
@@ -82,19 +82,19 @@ public class RecipeController {
 
             RecipeDto createdRecipe = recipeService.createRecipe(recipeRequest, user);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRecipe);
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
-        } catch (ResourceAlreadyExistsException ex) {
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (ResourceAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse("Receta ya existe", ex.getMessage()));
-        } catch (InvalidRequestException ex) {
+                    .body(new ErrorResponse("CONFLICT", e.getMessage()));
+        } catch (InvalidRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Error de validación", ex.getMessage()));
-        } catch (Exception ex) {
-            ex.printStackTrace();
+                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
+        } catch (Exception e ) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error al crear receta", "Ocurrió un error inesperado"));
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
@@ -107,16 +107,16 @@ public class RecipeController {
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
             recipeService.deleteRecipe(id, user);
-            return ResponseEntity.ok().body(Map.of("message", "Receta eliminada correctamente"));
-        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.ok(new SuccessResponse("Receta eliminada correctamente"));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
-        } catch (AccessDeniedException ex) {
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ErrorResponse("Acceso denegado", ex.getMessage()));
-        } catch (Exception ex) {
+                    .body(new ErrorResponse("ACCESS_DENIED", e.getMessage()));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error al eliminar receta", "Ocurrió un error inesperado"));
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
@@ -131,24 +131,24 @@ public class RecipeController {
 
             RecipeDto updatedRecipe = recipeService.updateRecipe(id, recipeRequest, user);
             return ResponseEntity.ok(updatedRecipe);
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Recurso no encontrado", ex.getMessage()));
-        } catch (AccessDeniedException ex) {
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ErrorResponse("Acceso denegado", ex.getMessage()));
-        } catch (ResourceAlreadyExistsException ex) {
+                    .body(new ErrorResponse("ACCESS_DENIED", e.getMessage()));
+        } catch (ResourceAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse("Receta ya existe", ex.getMessage()));
+                    .body(new ErrorResponse("CONFLICT", e.getMessage()));
 
-        } catch (InvalidRequestException ex) {
+        } catch (InvalidRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Error de validación", ex.getMessage()));
+                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error al actualizar receta", "Ocurrió un error inesperado"));
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 }

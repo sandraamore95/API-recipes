@@ -1,10 +1,12 @@
 package api_recipes.controllers;
+
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.models.User;
 import api_recipes.payload.dto.FavoriteDto;
 import api_recipes.payload.response.ErrorResponse;
+import api_recipes.payload.response.SuccessResponse;
 import api_recipes.repository.UserRepository;
 import api_recipes.security.services.UserDetailsImpl;
 import api_recipes.services.FavoriteService;
@@ -12,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,9 +23,9 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final UserRepository userRepository;
 
-    public FavoriteController(FavoriteService favoriteService,UserRepository userRepository) {
+    public FavoriteController(FavoriteService favoriteService, UserRepository userRepository) {
         this.favoriteService = favoriteService;
-        this.userRepository=userRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -33,11 +34,13 @@ public class FavoriteController {
             User user = userRepository.findById(userDetails.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-            List<FavoriteDto> favorites = favoriteService.getUserFavorites(user);
-            return ResponseEntity.ok(favorites);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError()
-                    .body(new ErrorResponse("Error interno", "Error al obtener favoritos"));
+            return ResponseEntity.ok(favoriteService.getUserFavorites(user));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
@@ -52,18 +55,18 @@ public class FavoriteController {
 
             FavoriteDto favorite = favoriteService.addFavorite(user, recipeId);
             return ResponseEntity.status(HttpStatus.CREATED).body(favorite);
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Receta no encontrada", ex.getMessage()));
-        } catch (ResourceAlreadyExistsException ex) {
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (ResourceAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse("Conflicto", ex.getMessage()));
-        } catch (InvalidRequestException ex) {
-            return ResponseEntity.badRequest()
-                    .body(new ErrorResponse("Solicitud inválida", ex.getMessage()));
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError()
-                    .body(new ErrorResponse("Error interno", "Ocurrió un error inesperado"));
+                    .body(new ErrorResponse("CONFLICT", e.getMessage()));
+        } catch (InvalidRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
@@ -76,13 +79,13 @@ public class FavoriteController {
             User user = userRepository.findById(userDetails.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
             favoriteService.removeFavorite(user, recipeId);
-            return ResponseEntity.ok().body(Map.of("message", "Receta eliminada de favoritos "));
-        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.ok(new SuccessResponse("Receta eliminada de favoritos"));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Receta no encontrada", ex.getMessage()));
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError()
-                    .body(new ErrorResponse("Error interno", "Ocurrió un error al eliminar favorito"));
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al eliminar favorito"));
         }
     }
 
@@ -97,15 +100,12 @@ public class FavoriteController {
 
             boolean exists = favoriteService.existsByUserAndRecipe(user, recipeId);
             return ResponseEntity.ok(Map.of("isFavorite", exists));
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Usuario no encontrado", ex.getMessage()));
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError()
-                    .body(new ErrorResponse("Error interno", "No se pudo verificar el favorito"));
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "No se pudo verificar el favorito"));
         }
     }
-
-
-
 }

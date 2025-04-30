@@ -1,5 +1,6 @@
 package api_recipes.controllers;
 import api_recipes.payload.dto.CategoryDto;
+import api_recipes.payload.response.ErrorResponse;
 import api_recipes.services.CategoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +19,14 @@ public class CategoriesController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryDto>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+    public ResponseEntity<?> getAllCategories() {
+        try {
+            List<CategoryDto> categories = categoryService.getAllCategories();
+            return ResponseEntity.ok(categories);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener las categorías."));
+        }
     }
-
 
 }

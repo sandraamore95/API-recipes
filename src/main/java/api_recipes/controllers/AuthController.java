@@ -1,8 +1,6 @@
 package api_recipes.controllers;
-import api_recipes.exceptions.InvalidRequestException;
-import api_recipes.exceptions.InvalidTokenException;
-import api_recipes.exceptions.ResourceAlreadyExistsException;
-import api_recipes.exceptions.ResourceNotFoundException;
+
+import api_recipes.exceptions.*;
 import api_recipes.models.User;
 import api_recipes.payload.request.ForgotPasswordRequest;
 import api_recipes.payload.request.LoginRequest;
@@ -29,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,10 +49,10 @@ public class AuthController {
                           JwtUtils jwtUtils,
                           AccountService accountService) {
         this.authenticationManager = authenticationManager;
-        this.userService=userService;
+        this.userService = userService;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
-        this.accountService=accountService;
+        this.accountService = accountService;
     }
 
 
@@ -84,46 +83,52 @@ public class AuthController {
         try {
             User newUser = userService.registerUser(signUpRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
-        } catch (ResourceAlreadyExistsException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Recurso no encontrado", e.getMessage()));
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (ResourceAlreadyExistsException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("CONFLICT", ex.getMessage()));
         } catch (InvalidRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Error de validación", e.getMessage()));
+                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error al crear usuario", "Ocurrió un error inesperado"));
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
 
     //forgot password
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         try {
-            accountService.createPasswordResetTokenForUser(request.getEmail());
+            accountService.createPasswordResetTokenForUser(forgotPasswordRequest.getEmail());
             return ResponseEntity.ok(new SuccessResponse("Se ha enviado un correo para restablecer tu contraseña."));
         } catch (ResourceNotFoundException e) {
-            // Captura el error cuando el usuario no se encuentra
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Usuario no encontrado", e.getMessage()));
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error: Algo salió mal, intenta nuevamente más tarde" , e.getMessage()));
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
     //reset password
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         try {
-            User user = accountService.validatePasswordResetToken(request.getToken());
-            accountService.updatePassword(user, request.getNewPassword());
-            accountService .invalidateToken(request.getToken());
-            return ResponseEntity.ok("Contraseña actualizada correctamente.");
-        } catch (InvalidTokenException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SuccessResponse("Error: El token de restablecimiento de contraseña no es válido."));
+            User user = accountService.validatePasswordResetToken(resetPasswordRequest.getToken());
+            accountService.updatePassword(user, resetPasswordRequest.getNewPassword());
+            accountService.invalidateToken(resetPasswordRequest.getToken());
+            return ResponseEntity.ok(new SuccessResponse("Contraseña actualizada correctamente."));
+        }
+        catch (InvalidTokenException | ExpiredTokenException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_TOKEN", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado al restablecer la contraseña."));
         }
     }
 

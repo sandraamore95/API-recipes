@@ -21,6 +21,7 @@ public class GlobalExceptionHandler {
                     .append("; ");
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("Error de validación", errorMessage.toString()));
+                .body(new ErrorResponse("VALIDATION_ERROR", errorMessage.toString()));
     }
 }
+
