@@ -1,4 +1,5 @@
 package api_recipes.controllers;
+
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
@@ -27,20 +28,21 @@ public class RecipeController {
     private final RecipeService recipeService;
     private final UserRepository userRepository;
 
-    public RecipeController(RecipeService recipeService,UserRepository userRepository) {
+    public RecipeController(RecipeService recipeService, UserRepository userRepository) {
         this.recipeService = recipeService;
-        this.userRepository=userRepository;
+        this.userRepository = userRepository;
     }
 
-    //  Obtener todas las recetas
     @GetMapping
-    public ResponseEntity<Page<RecipeDto>> getAllRecipes(
+    public ResponseEntity<?> getAllRecipes(
             @PageableDefault(size = 10, sort = "title") Pageable pageable) {
-
-        Page<RecipeDto> recipes = recipeService.getAllRecipes(pageable);
-        return recipes.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(recipes);
+        try {
+            Page<RecipeDto> recipes = recipeService.getAllRecipes(pageable);
+            return ResponseEntity.ok(recipes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener las recetas."));
+        }
     }
 
 
@@ -91,7 +93,7 @@ public class RecipeController {
         } catch (InvalidRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
-        } catch (Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
