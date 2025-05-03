@@ -1,7 +1,11 @@
 package api_recipes.services;
+import api_recipes.exceptions.ResourceAlreadyExistsException;
+import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.mapper.IngredientMapper;
 import api_recipes.models.Ingredient;
+import api_recipes.models.Recipe;
 import api_recipes.payload.dto.IngredientDto;
+import api_recipes.payload.request.IngredientRequest;
 import api_recipes.repository.IngredientRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -26,5 +30,28 @@ public class IngredientService {
         }
 
         return ingredientMapper.toDtoList(ingredients);
+    }
+
+    public Ingredient getIngredientEntityById(Long id) {
+        return ingredientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada"));
+    }
+
+    public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
+        if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName())) {
+            throw new ResourceAlreadyExistsException("El ingrediente ya existe");
+        }
+
+        Ingredient ingredient = new Ingredient();
+        ingredient.setName(ingredientRequest.getName());
+        ingredient.setUnit_measure(ingredientRequest.getUnitMeasure());
+
+        Ingredient savedIngredient = ingredientRepository.save(ingredient);
+        return ingredientMapper.toDto(savedIngredient);
+    }
+
+
+    public void save(Ingredient ingredient) {
+        ingredientRepository.save(ingredient);
     }
 }

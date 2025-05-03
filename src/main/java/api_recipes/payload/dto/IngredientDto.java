@@ -9,4 +9,5 @@ public class IngredientDto {
     private Long id;
     private String name;
     private Ingredient.UnitMeasure unit_measure;
+    private String imageUrl;
 }
