@@ -27,14 +27,16 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
+    // Extrae el JWT del header
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
+            if (jwt != null && jwtUtils.validateJwtToken(jwt)) { // Comprueba que el token es valido en cada solicitud entrante
+                String username = jwtUtils.getUserNameFromJwtToken(jwt); // Extrae el nombre de usuario
 
+                // Carga el usuario
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
@@ -43,6 +45,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                 userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                // Se guarda la informacion de el contexto de seguridad de Spring
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {

@@ -1,4 +1,5 @@
 package api_recipes.controllers;
+import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.models.Ingredient;
@@ -6,17 +7,15 @@ import api_recipes.payload.dto.IngredientDto;
 import api_recipes.payload.request.IngredientRequest;
 import api_recipes.payload.response.ErrorResponse;
 import api_recipes.payload.response.SuccessResponse;
+import api_recipes.services.ImageUploadService;
 import api_recipes.services.IngredientService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
+
+import java.awt.*;
 
 @RestController
 @RequestMapping("/api/ingredients")
@@ -24,9 +23,11 @@ public class IngredientsController {
 
 
     private final IngredientService ingredientService;
+    private final ImageUploadService imageUploadService;
 
-    public IngredientsController(IngredientService ingredientService) {
+    public IngredientsController(IngredientService ingredientService, ImageUploadService imageUploadService) {
         this.ingredientService = ingredientService;
+        this.imageUploadService=imageUploadService;
     }
 
         @GetMapping
@@ -69,33 +70,24 @@ public class IngredientsController {
             Ingredient ingredient = ingredientService.getIngredientEntityById(id);
 
 
-            String uploadDir = "src/main/resources/static/images/ingredients";
-            Files.createDirectories(Paths.get(uploadDir)); // cear directorio si no existe
-
-            // si ya existe una imagen, borrarla
+            // Eliminar imagen anterior si existe
             if (ingredient.getImageUrl() != null) {
-                String oldFilename = ingredient.getImageUrl().replace("/images/ingredients/", "");
-                Path oldFilePath = Paths.get(uploadDir, oldFilename);
-                Files.deleteIfExists(oldFilePath);
+                imageUploadService.deleteImage(ingredient.getImageUrl(), "ingredients", null);
             }
 
-
-            String newFilename = "ingredient_" + id + "_" + file.getOriginalFilename();
-            Path newFilePath = Paths.get(uploadDir, newFilename);
-            Files.copy(file.getInputStream(), newFilePath, StandardCopyOption.REPLACE_EXISTING);
-
-
-            String imageUrl = "/images/ingredients/" + newFilename;
-            ingredient.setImageUrl(imageUrl);
-            ingredientService.save(ingredient);
+            // Subir nueva imagen
+            String imageUrl = imageUploadService.uploadImage(file, "ingredients", "ingredient", null);
+            ingredientService.updateIngredientImage(id, imageUrl);
 
             return ResponseEntity.ok(new SuccessResponse("Imagen subida con éxito"));
 
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (InvalidRequestException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Error al subir imagen: " + e.getMessage()));
         }

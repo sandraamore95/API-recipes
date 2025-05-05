@@ -8,6 +8,8 @@ import api_recipes.payload.dto.IngredientDto;
 import api_recipes.payload.request.IngredientRequest;
 import api_recipes.repository.IngredientRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -48,6 +50,13 @@ public class IngredientService {
 
         Ingredient savedIngredient = ingredientRepository.save(ingredient);
         return ingredientMapper.toDto(savedIngredient);
+    }
+
+    @Transactional
+    public void updateIngredientImage(Long id, String imageUrl) {
+        Ingredient ingredient = getIngredientEntityById(id);
+        ingredient.setImageUrl(imageUrl);
+        ingredientRepository.save(ingredient);
     }
 
 
