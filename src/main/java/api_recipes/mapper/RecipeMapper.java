@@ -62,6 +62,7 @@ public interface RecipeMapper {
             dto.setName(ri.getIngredient().getName());
             dto.setQuantity(ri.getQuantity());
             dto.setImageUrl(ri.getIngredient().getImageUrl());
+            dto.setUnit_measure(ri.getIngredient().getUnit_measure());
             return dto;
         }).collect(Collectors.toSet());
     }
