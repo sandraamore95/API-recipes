@@ -3,6 +3,7 @@ package api_recipes.controllers;
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
+import api_recipes.models.Recipe;
 import api_recipes.models.User;
 import api_recipes.payload.dto.RecipeDto;
 import api_recipes.payload.request.RecipeRequest;
@@ -10,6 +11,7 @@ import api_recipes.payload.response.ErrorResponse;
 import api_recipes.payload.response.SuccessResponse;
 import api_recipes.repository.UserRepository;
 import api_recipes.security.services.UserDetailsImpl;
+import api_recipes.services.ImageUploadService;
 import api_recipes.services.RecipeService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -27,10 +30,12 @@ public class RecipeController {
 
     private final RecipeService recipeService;
     private final UserRepository userRepository;
+    private final ImageUploadService imageUploadService;
 
-    public RecipeController(RecipeService recipeService, UserRepository userRepository) {
+    public RecipeController(RecipeService recipeService, UserRepository userRepository,ImageUploadService imageUploadService) {
         this.recipeService = recipeService;
         this.userRepository = userRepository;
+        this.imageUploadService=imageUploadService;
     }
 
     @GetMapping
@@ -151,6 +156,48 @@ public class RecipeController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
+        }
+    }
+
+
+    @PostMapping("/{id}/upload-image")
+    public ResponseEntity<?> uploadImage(
+            @PathVariable Long id,
+            @RequestParam("image") MultipartFile file,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        try {
+            User user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+            Recipe recipe = recipeService.getRecipeEntityById(id);
+
+            if (!recipe.getUser().getUsername().equals(user.getUsername())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ErrorResponse("ACCESS_DENIED", "No tienes permiso para modificar esta receta"));
+            }
+
+
+            // Eliminar imagen anterior si existe
+            if (recipe.getImageUrl() != null) {
+                imageUploadService.deleteImage(recipe.getImageUrl(), "recipes", id);
+            }
+
+            // Subir nueva imagen
+            String imageUrl = imageUploadService.uploadImage(file, "recipes", "recipe", id);
+            recipeService.updateRecipeImage(id, imageUrl);
+
+            return ResponseEntity.ok(new SuccessResponse("Imagen subida con éxito"));
+
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (InvalidRequestException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Error al subir imagen: " + e.getMessage()));
         }
     }
 }

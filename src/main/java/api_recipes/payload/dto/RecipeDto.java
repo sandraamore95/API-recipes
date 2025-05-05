@@ -14,6 +14,7 @@ public class RecipeDto {
     private Set<String> categories;
     private  Recipe.RecipeStatus status;
     private Set<RecipeIngredientDto> ingredients;
+    private String imageUrl;
     private Long userId;
 }
     /*

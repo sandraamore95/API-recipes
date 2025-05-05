@@ -38,6 +38,11 @@ public class IngredientService {
         return ingredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada"));
     }
+    public IngredientDto getIngredientById(Long id){
+        return ingredientRepository.findById(id)
+                .map(ingredientMapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada"));
+    }
 
     public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
         if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName())) {

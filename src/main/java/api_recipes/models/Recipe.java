@@ -24,6 +24,9 @@ public class Recipe {
     @Column(length = 1000)
     private String preparation;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     private int popularity;
 
     @Enumerated(EnumType.STRING)

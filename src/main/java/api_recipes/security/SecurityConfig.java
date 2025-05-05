@@ -92,6 +92,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/favorites/exists/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/favorites").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/recipes/{id}/upload-image").authenticated()
 
 
 
