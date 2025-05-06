@@ -33,27 +33,29 @@ public class ImageUploadService {
         validateFile(file);
 
         // Crear directorio si no existe
-        String uploadDir = "src/main/resources/static/images/" + baseDir;
+        String uploadDir = "uploads/images/" + baseDir;
         if (id != null) {
             uploadDir += "/" + id;
         }
         Files.createDirectories(Paths.get(uploadDir));
+        System.out.println(uploadDir);
 
         // Generar nombre único para el archivo
         String extension = getFileExtension(file.getOriginalFilename());
         String newFilename = prefix + "_" + UUID.randomUUID().toString() + extension;
         Path newFilePath = Paths.get(uploadDir, newFilename);
-
+        System.out.println(newFilePath);
         // Guardar el archivo
         Files.copy(file.getInputStream(), newFilePath, StandardCopyOption.REPLACE_EXISTING);
 
         // Retornar la URL de la imagen
+        System.out.println("/images/" + baseDir + (id != null ? "/" + id : "") + "/" + newFilename);
         return "/images/" + baseDir + (id != null ? "/" + id : "") + "/" + newFilename;
     }
 
     public void deleteImage(String imageUrl, String baseDir, Long id) throws IOException {
         if (imageUrl != null) {
-            String uploadDir = "src/main/resources/static/images/" + baseDir;
+            String uploadDir = "uploads/images/" + baseDir;
             if (id != null) {
                 uploadDir += "/" + id;
             }
