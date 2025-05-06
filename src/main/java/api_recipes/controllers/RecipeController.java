@@ -99,7 +99,6 @@ public class RecipeController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
@@ -153,14 +152,13 @@ public class RecipeController {
                     .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
 
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }
     }
 
 
-    @PostMapping("/{id}/upload-image")
+    @PatchMapping("/{id}/upload-image")
     public ResponseEntity<?> uploadImage(
             @PathVariable Long id,
             @RequestParam("image") MultipartFile file,
