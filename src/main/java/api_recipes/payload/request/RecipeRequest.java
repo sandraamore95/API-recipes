@@ -26,6 +26,5 @@ public class RecipeRequest {
     @Valid
     @NotNull(message = "La lista de ingredientes no puede ser nula")
     @NotEmpty(message = "Debe haber al menos un ingrediente")
-    @Positive(message = "La cantidad debe ser mayor que cero")
     private Set<RecipeIngredientRequest> ingredients;
 }

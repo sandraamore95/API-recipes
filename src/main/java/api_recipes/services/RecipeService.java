@@ -79,18 +79,12 @@ public class RecipeService {
     }
 
     //crear receta
+    @Transactional
     public RecipeDto createRecipe(@Valid RecipeRequest recipeRequest, User user) {
 
         //  Verificar si la receta ya existe
         if (recipeRepository.findByTitle(recipeRequest.getTitle()).isPresent()) {
             throw new ResourceAlreadyExistsException("La receta con el título '" + recipeRequest.getTitle() + "' ya existe.");
-        }
-        // Verificar ingredientes duplicados
-        Set<Long> uniqueIds = new HashSet<>();
-        for (RecipeIngredientRequest req : recipeRequest.getIngredients()) {
-            if (!uniqueIds.add(req.getIngredientId())) {
-                throw new InvalidRequestException("Ingrediente duplicado con ID " + req.getIngredientId());
-            }
         }
 
         //  Convertir RecipeRequest a Recipe (sin categorías ni ingredientes aún)
@@ -182,6 +176,10 @@ public class RecipeService {
     }
 
     private void updateRecipeCategories(Recipe recipe, Set<String> categoryNames) {
+        if (categoryNames == null || categoryNames.isEmpty()) {
+            return;
+        }
+
         Set<String> requestedNames = new HashSet<>(categoryNames);
         Set<Category> foundCategories = categoryRepository.findByNameIn(requestedNames);
 
