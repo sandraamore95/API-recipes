@@ -19,7 +19,7 @@ public class SignupRequest {
     @Email(message = "El formato del email no es válido")
     private String email;
 
-    @NotEmpty(message = "Debe seleccionar al menos un rol")
+
     private Set<String> role;
 
     @NotBlank(message = "La contraseña es obligatoria")
