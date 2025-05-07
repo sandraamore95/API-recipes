@@ -11,6 +11,6 @@ public class RecipeIngredientRequest {
     @NotNull(message = "El ID del ingrediente es obligatorio")
     private Long ingredientId;
 
-    @NotBlank(message = "La cantidad es obligatoria")
+    @NotNull(message = "La cantidad es obligatoria")
     private Double quantity;
 }
