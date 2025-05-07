@@ -1,18 +1,18 @@
 package api_recipes.services;
 
 import api_recipes.exceptions.InvalidRequestException;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ImageUploadService {
@@ -38,13 +38,11 @@ public class ImageUploadService {
             uploadDir += "/" + id;
         }
         Files.createDirectories(Paths.get(uploadDir));
-        System.out.println(uploadDir);
 
         // Generar nombre único para el archivo
         String extension = getFileExtension(file.getOriginalFilename());
         String newFilename = prefix + "_" + UUID.randomUUID().toString() + extension;
         Path newFilePath = Paths.get(uploadDir, newFilename);
-        System.out.println(newFilePath);
         // Guardar el archivo
         Files.copy(file.getInputStream(), newFilePath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -92,5 +90,13 @@ public class ImageUploadService {
 
     private String getFileExtension(String filename) {
         return filename.substring(filename.lastIndexOf(".")).toLowerCase();
+    }
+
+    public void deleteDirectoryAndImage(String baseDir, Long id) throws IOException {
+        if (id != null) {
+            File dir = new File("uploads/images/", baseDir + "/" + id);
+            System.out.println(dir);
+            FileUtils.deleteDirectory(dir); //Elimina todo el contenido del directorio
+        }
     }
 }

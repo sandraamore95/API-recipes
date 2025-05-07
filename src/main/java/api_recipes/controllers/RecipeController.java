@@ -115,6 +115,14 @@ public class RecipeController {
             User user = userRepository.findById(userDetails.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
+            // Obtener la receta
+            Recipe recipe = recipeService.getRecipeEntityById(id);
+
+            // Eliminar el directorio donde se encuentra la imagen (existe la carpeta)
+            if (recipe.getImageUrl() != null) {
+                imageUploadService.deleteDirectoryAndImage("recipes", id);
+            }
+
             recipeService.deleteRecipe(id, user);
             return ResponseEntity.ok(new SuccessResponse("Receta eliminada correctamente"));
         } catch (ResourceNotFoundException e) {
