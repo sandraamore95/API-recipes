@@ -20,8 +20,7 @@ public class RecipeRequest {
     @NotBlank(message = "El método de preparación es obligatorio")
     private String preparation;
 
-    @NotNull(message = "Debe haber al menos una categoría")
-    private Set<String> categories;
+    private Set<String> categories; // la receta se puede crear sin categorias
 
     @Valid
     @NotNull(message = "La lista de ingredientes no puede ser nula")
