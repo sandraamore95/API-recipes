@@ -1,20 +1,16 @@
 package api_recipes.services;
 import api_recipes.exceptions.InvalidRequestException;
-import api_recipes.exceptions.InvalidTokenException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.mapper.UserMapper;
 import api_recipes.models.Role;
-import api_recipes.models.TokenUser;
 import api_recipes.models.User;
 import api_recipes.payload.dto.UserDto;
 import api_recipes.payload.request.SignupRequest;
 import api_recipes.repository.RoleRepository;
-import api_recipes.repository.TokenUserRepository;
 import api_recipes.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -67,24 +63,7 @@ public class UserService {
 
         // Asignar roles
         Set<String> strRoles = signUpRequest.getRole();
-        Set<Role> roles = new HashSet<>();
-        if (strRoles == null || strRoles.isEmpty()) {
-            // Asignar rol por defecto ROLE_USER
-            Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
-                    .orElseThrow(() -> new ResourceNotFoundException("El rol ROLE_USER no fue encontrado."));
-            roles.add(userRole);
-        } else {
-            for (String role : strRoles) {
-                try {
-                    Role.RoleName roleName = Role.RoleName.valueOf(role.toUpperCase());
-                    Role foundRole = roleRepository.findByName(roleName)
-                            .orElseThrow(() -> new ResourceNotFoundException("El rol " + role + " no fue encontrado."));
-                    roles.add(foundRole);
-                } catch (IllegalArgumentException e) {
-                    throw new InvalidRequestException("Rol inválido: " + role);
-                }
-            }
-        }
+        Set<Role> roles = assignRoles(strRoles);
 
         user.setRoles(roles);
         return userRepository.save(user);
@@ -111,5 +90,28 @@ public class UserService {
         return false;
     }
 
+    private Set<Role> assignRoles(Set<String> strRoles) {
+        Set<Role> roles = new HashSet<>();
+
+        if (strRoles == null || strRoles.isEmpty()) {
+            // Asignar rol por defecto ROLE_USER
+            Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
+                    .orElseThrow(() -> new ResourceNotFoundException("El rol ROLE_USER no fue encontrado."));
+            roles.add(userRole);
+        } else {
+            // Verificar rol y asignar
+            for (String role : strRoles) {
+                try {
+                    Role.RoleName roleName = Role.RoleName.valueOf(role.toUpperCase());
+                    Role foundRole = roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new ResourceNotFoundException("El rol " + role + " no fue encontrado."));
+                    roles.add(foundRole);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidRequestException("Rol inválido: " + role);
+                }
+            }
+        }
+        return roles;
+    }
 
 }

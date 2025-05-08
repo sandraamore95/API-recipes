@@ -61,6 +61,9 @@ public class RecipeController {
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        }catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener las recetas."));
         }
     }
 
