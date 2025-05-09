@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.*;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/ingredients")
@@ -64,11 +65,10 @@ public class IngredientsController {
         try {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(new ErrorResponse("BAD_REQUEST", "El archivo está vacío"));
+                        .body(new ErrorResponse("INVALID_REQUEST", "El archivo está vacío"));
             }
 
             Ingredient ingredient = ingredientService.getIngredientEntityById(id);
-
 
             // Eliminar imagen anterior si existe
             if (ingredient.getImageUrl() != null) {
@@ -87,7 +87,10 @@ public class IngredientsController {
         } catch (InvalidRequestException e) {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
-        } catch (Exception e) {
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Error en el manejo de archivos: " + e.getMessage()));
+        }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Error al subir imagen: " + e.getMessage()));
         }

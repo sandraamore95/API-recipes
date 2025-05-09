@@ -77,7 +77,7 @@ public class SecurityConfig {
 
                         // Endpoints con restricciones de roles
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/users/**").hasAnyRole( "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/ingredients/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/ingredients/{id}/upload-image").hasRole("ADMIN")
 

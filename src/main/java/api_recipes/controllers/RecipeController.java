@@ -24,6 +24,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/recipes")
 public class RecipeController {
@@ -32,10 +34,10 @@ public class RecipeController {
     private final UserRepository userRepository;
     private final ImageUploadService imageUploadService;
 
-    public RecipeController(RecipeService recipeService, UserRepository userRepository,ImageUploadService imageUploadService) {
+    public RecipeController(RecipeService recipeService, UserRepository userRepository, ImageUploadService imageUploadService) {
         this.recipeService = recipeService;
         this.userRepository = userRepository;
-        this.imageUploadService=imageUploadService;
+        this.imageUploadService = imageUploadService;
     }
 
     @GetMapping
@@ -61,7 +63,7 @@ public class RecipeController {
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
-        }catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener las recetas."));
         }
@@ -79,7 +81,7 @@ public class RecipeController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
-    }
+        }
     }
 
 
@@ -184,11 +186,11 @@ public class RecipeController {
 
             Recipe recipe = recipeService.getRecipeEntityById(id);
 
+            // Si la receta Si existe pero no le pertenece al usuario
             if (!recipe.getUser().getUsername().equals(user.getUsername())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new ErrorResponse("ACCESS_DENIED", "No tienes permiso para modificar esta receta"));
             }
-
 
             // Eliminar imagen anterior si existe
             if (recipe.getImageUrl() != null) {
@@ -207,6 +209,9 @@ public class RecipeController {
         } catch (InvalidRequestException e) {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Error en el manejo de archivos: " + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Error al subir imagen: " + e.getMessage()));

@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
             errorMessage.append(error.getField())
                     .append(": ")
                     .append(error.getDefaultMessage())
-                    .append("; ");
+                    .append("\n");
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("VALIDATION_ERROR", errorMessage.toString()));
