@@ -70,14 +70,14 @@ public class IngredientsController {
 
             Ingredient ingredient = ingredientService.getIngredientEntityById(id);
 
+            // Subir nueva imagen si es válida
+            String imageUrl = imageUploadService.uploadImage(file, "ingredients", "ingredient", null);
+            ingredientService.updateIngredientImage(id, imageUrl);
+
             // Eliminar imagen anterior si existe
             if (ingredient.getImageUrl() != null) {
                 imageUploadService.deleteImage(ingredient.getImageUrl(), "ingredients", null);
             }
-
-            // Subir nueva imagen
-            String imageUrl = imageUploadService.uploadImage(file, "ingredients", "ingredient", null);
-            ingredientService.updateIngredientImage(id, imageUrl);
 
             return ResponseEntity.ok(new SuccessResponse("Imagen subida con éxito"));
 

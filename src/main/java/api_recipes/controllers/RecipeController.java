@@ -192,13 +192,15 @@ public class RecipeController {
                         .body(new ErrorResponse("ACCESS_DENIED", "No tienes permiso para modificar esta receta"));
             }
 
-            // Eliminar imagen anterior si existe
+            // Validar antes de  subir  la imagen
+            String imageUrl = imageUploadService.uploadImage(file, "recipes", "recipe", id);
+
+            // Borrar imagen anterior si existe
             if (recipe.getImageUrl() != null) {
                 imageUploadService.deleteImage(recipe.getImageUrl(), "recipes", id);
             }
 
-            // Subir nueva imagen
-            String imageUrl = imageUploadService.uploadImage(file, "recipes", "recipe", id);
+            // Actualizar la receta con la nueva URL
             recipeService.updateRecipeImage(id, imageUrl);
 
             return ResponseEntity.ok(new SuccessResponse("Imagen subida con éxito"));
