@@ -48,6 +48,9 @@ public class Recipe {
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecipeIngredient> recipeIngredients = new HashSet<>();
 
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Favorite> favorites;
+
     public enum RecipeStatus {
         PENDING, APPROVED, REJECTED
     }
