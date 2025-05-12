@@ -57,7 +57,6 @@ public class RecipeController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getRecipeById(@PathVariable Long id) {
         try {
-            recipeService.incrementPopularityRecipe(id);
             RecipeDto recipe = recipeService.getRecipeById(id);
             return ResponseEntity.ok(recipe);
         } catch (ResourceNotFoundException e) {
@@ -168,6 +167,7 @@ public class RecipeController {
                     .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
         }

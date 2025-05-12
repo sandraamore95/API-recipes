@@ -8,10 +8,7 @@ import api_recipes.models.*;
 import api_recipes.payload.dto.RecipeDto;
 import api_recipes.payload.request.RecipeIngredientRequest;
 import api_recipes.payload.request.RecipeRequest;
-import api_recipes.repository.CategoryRepository;
-import api_recipes.repository.IngredientRepository;
-import api_recipes.repository.RecipeRepository;
-import api_recipes.repository.UserRepository;
+import api_recipes.repository.*;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -19,9 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -33,14 +28,16 @@ public class RecipeService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
+    private final RecipeIngredientRepository recipeIngredientRepository;
 
     public RecipeService(RecipeRepository recipeRepository, UserRepository userRepository, RecipeMapper recipeMapper, CategoryRepository categoryRepository,
-                         IngredientRepository ingredientRepository) {
+                         IngredientRepository ingredientRepository,RecipeIngredientRepository recipeIngredientRepository) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.ingredientRepository = ingredientRepository;
+        this.recipeIngredientRepository=recipeIngredientRepository;
     }
 
 
@@ -60,17 +57,6 @@ public class RecipeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Receta con el id '" + id + "' no encontrada"));
     }
 
-
-    @Transactional
-    public RecipeDto incrementPopularityRecipe(Long id){
-        Recipe recipe = recipeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Receta con el id '" + id + "' no encontrada"));
-
-        recipe.setPopularity(recipe.getPopularity() + 1);
-        recipeRepository.save(recipe);
-
-        return recipeMapper.toDTO(recipe);
-    }
 
     public RecipeDto getRecipeByTitle(String title) {
         return recipeRepository.findByTitle(title)
@@ -169,42 +155,63 @@ public class RecipeService {
     private void validateUniqueIngredients(Set<RecipeIngredientRequest> ingredients) {
         Set<Long> uniqueIds = new HashSet<>();
         for (RecipeIngredientRequest req : ingredients) {
+            System.out.println(req.getIngredientId());
             if (!uniqueIds.add(req.getIngredientId())) {
                 throw new InvalidRequestException("Ingrediente duplicado con ID " + req.getIngredientId());
             }
         }
     }
 
-    private void updateRecipeCategories(Recipe recipe, Set<String> categoryNames) {
-        if (categoryNames == null || categoryNames.isEmpty()) {
-            return;
-        }
-
-        Set<String> requestedNames = new HashSet<>(categoryNames);
-        Set<Category> foundCategories = categoryRepository.findByNameIn(requestedNames);
-
-        if (foundCategories.size() != requestedNames.size()) {
-            Set<String> foundNames = foundCategories.stream()
-                    .map(Category::getName)
-                    .collect(Collectors.toSet());
-            requestedNames.removeAll(foundNames);
-            throw new ResourceNotFoundException("Categorías no encontradas: " + String.join(", ", requestedNames));
-        }
-        recipe.setCategories(foundCategories);
-    }
 
     private void updateRecipeIngredients(Recipe recipe, Set<RecipeIngredientRequest> ingredientRequests) {
         Set<RecipeIngredient> existingIngredients = recipe.getRecipeIngredients();
-        existingIngredients.clear();
 
+        // Mapa para buscar rápidamente por ingredientId
+        Map<Long, RecipeIngredientRequest> requestMap = ingredientRequests.stream()
+                .collect(Collectors.toMap(RecipeIngredientRequest::getIngredientId, req -> req));
+
+        // Eliminar los que ya no están en el request
+        existingIngredients.removeIf(ri -> !requestMap.containsKey(ri.getIngredient().getId()));
+
+        // Actualizar o agregar nuevos
         for (RecipeIngredientRequest req : ingredientRequests) {
-            Ingredient ingredient = ingredientRepository.findById(req.getIngredientId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Ingrediente con ID " + req.getIngredientId() + " no encontrado"));
+            Long ingredientId = req.getIngredientId();
+            Optional<RecipeIngredient> existing = existingIngredients.stream()
+                    .filter(ri -> ri.getIngredient().getId().equals(ingredientId))
+                    .findFirst();
 
-            RecipeIngredient recipeIngredient = new RecipeIngredient(null, recipe, ingredient, req.getQuantity());
-            existingIngredients.add(recipeIngredient);
+            if (existing.isPresent()) {
+                // Si ya existe, actualizamos la cantidad
+                existing.get().setQuantity(req.getQuantity());
+            } else {
+                // Si no existe, lo agregamos
+                Ingredient ingredient = ingredientRepository.findById(ingredientId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Ingrediente con ID " + ingredientId + " no encontrado"));
+
+                RecipeIngredient newRI = new RecipeIngredient(null, recipe, ingredient, req.getQuantity());
+                existingIngredients.add(newRI);
+            }
         }
+    }
+
+    private void updateRecipeCategories(Recipe recipe,  Set<String> categories){
+
+        if (categories == null || categories.isEmpty()) {
+            recipe.setCategories(Collections.emptySet());
+            return;
+        }
+
+        Set<Category> existingCategories = categoryRepository.findByNameIn(categories);
+        if (existingCategories.size() != categories.size()) {
+            Set<String> foundNames = existingCategories.stream()
+                    .map(Category::getName)
+                    .collect(Collectors.toSet());
+
+            categories.removeAll(foundNames);
+            throw new ResourceNotFoundException("Categorías no encontradas: " + String.join(", ", categories));
+        }
+        recipe.setCategories(existingCategories);
     }
 
     @Transactional

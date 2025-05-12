@@ -38,8 +38,7 @@ public class Favorite {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Favorite favorite = (Favorite) o;
+        if (!(o instanceof Favorite favorite)) return false;
         return Objects.equals(user, favorite.user) &&
                 Objects.equals(recipe, favorite.recipe);
     }
