@@ -13,6 +13,7 @@ public class RecipeDto {
     private String preparation;
     private Set<String> categories;
     private  Recipe.RecipeStatus status;
+    private int popularity;
     private Set<RecipeIngredientDto> ingredients;
     private String imageUrl;
     private Long userId;

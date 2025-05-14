@@ -47,6 +47,9 @@ public class FavoriteService {
             throw new InvalidRequestException("No puedes agregar tus propias recetas a favoritos");
         }
 
+        // Aumentar la popularidad de la receta cada vez que se marca favorita
+        recipe.increasePopularity();
+
         Favorite favorite = new Favorite(user, recipe);
         Favorite savedFavorite = favoriteRepository.save(favorite);
         return favoriteMapper.toDto(savedFavorite);

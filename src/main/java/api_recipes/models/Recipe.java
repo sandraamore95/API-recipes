@@ -27,7 +27,11 @@ public class Recipe {
     @Column(name = "image_url")
     private String imageUrl;
 
-    private int popularity;
+    private int popularity = 0;
+
+    public void increasePopularity() {
+        this.popularity += 1;
+    }
 
     @Enumerated(EnumType.STRING)
     private RecipeStatus status = RecipeStatus.PENDING; // Estado inicial
