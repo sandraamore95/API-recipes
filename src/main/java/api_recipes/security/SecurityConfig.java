@@ -80,6 +80,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").hasAnyRole( "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/ingredients/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/ingredients/{id}/upload-image").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
 
 
                         //  endpoints que requieren autenticación
