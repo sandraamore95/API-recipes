@@ -66,7 +66,7 @@ public class RecipeService {
 
     //crear receta
     @Transactional
-    public RecipeDto createRecipe(@Valid RecipeRequest recipeRequest, User user) {
+    public RecipeDto createRecipe( RecipeRequest recipeRequest, User user) {
 
         //  Verificar si la receta ya existe
         if (recipeRepository.findByTitle(recipeRequest.getTitle()).isPresent()) {
@@ -101,7 +101,7 @@ public class RecipeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Receta no encontrada"));
 
         if (!recipe.getUser().getId().equals(user.getId())) {
-            throw new InvalidRequestException("No tienes permiso para eliminar esta receta");
+            throw new AccessDeniedException("No tienes permiso para eliminar esta receta");
         }
 
         recipeRepository.delete(recipe);
@@ -110,7 +110,7 @@ public class RecipeService {
 
     //update
     @Transactional
-    public RecipeDto updateRecipe(Long recipeId, @Valid RecipeRequest recipeRequest, User user) {
+    public RecipeDto updateRecipe(Long recipeId, RecipeRequest recipeRequest, User user) {
 
         //  Buscar receta existente
         Recipe recipe = recipeRepository.findById(recipeId)

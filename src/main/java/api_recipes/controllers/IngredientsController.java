@@ -56,8 +56,47 @@ public class IngredientsController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateIngredient(
+            @PathVariable Long id,
+            @Valid @RequestBody IngredientRequest ingredientRequest) {
+        try {
+            IngredientDto updatedIngredient = ingredientService.updateIngredient(id, ingredientRequest);
+            return ResponseEntity.ok(updatedIngredient);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (ResourceAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("CONFLICT", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Error al actualizar el ingrediente"));
+        }
+    }
 
-    @PostMapping("/{id}/upload-image")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteIngredient(@PathVariable Long id) {
+        try {
+
+            // Eliminar el directorio donde se encuentra la imagen (existe la carpeta)
+            Ingredient ingredient = ingredientService.getIngredientEntityById(id);
+            if (ingredient.getImageUrl() != null) {
+                imageUploadService.deleteDirectoryAndImage("ingredients", id);
+            }
+
+            ingredientService.deleteIngredient(id);
+            return ResponseEntity.ok(new SuccessResponse("Ingrediente eliminado correctamente"));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Error al eliminar el ingrediente"));
+        }
+    }
+
+    @PatchMapping("/{id}/upload-image")
     public ResponseEntity<?> uploadImage(
             @PathVariable Long id,
             @RequestParam("image") MultipartFile file) {

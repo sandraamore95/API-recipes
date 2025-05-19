@@ -1,7 +1,9 @@
 package api_recipes.services;
+import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.mapper.IngredientMapper;
+import api_recipes.models.Category;
 import api_recipes.models.Ingredient;
 import api_recipes.models.Recipe;
 import api_recipes.payload.dto.IngredientDto;
@@ -45,7 +47,7 @@ public class IngredientService {
     }
 
     public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
-        if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName())) {
+        if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
             throw new ResourceAlreadyExistsException("El ingrediente ya existe");
         }
 
@@ -58,14 +60,39 @@ public class IngredientService {
     }
 
     @Transactional
+    public IngredientDto updateIngredient(Long id, IngredientRequest ingredientRequest) {
+
+        // Verificar si existe el ingredinente al que voy a modificar
+        Ingredient ingredient = ingredientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
+
+
+        // Verificar si ya existe el ingrediente
+        if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
+            throw new ResourceAlreadyExistsException("El ingrediente " + ingredientRequest.getName() + " ya existe");
+        }
+
+        // Update campos
+        ingredient.setName(ingredientRequest.getName());
+        ingredient.setUnit_measure(ingredientRequest.getUnitMeasure());
+
+        ingredientRepository.save(ingredient);
+        return ingredientMapper.toDto(ingredient);
+    }
+
+    @Transactional
+    public void deleteIngredient(Long id) {
+        Ingredient ingredient = ingredientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
+        ingredientRepository.delete(ingredient);
+    }
+
+
+    @Transactional
     public void updateIngredientImage(Long id, String imageUrl) {
         Ingredient ingredient = getIngredientEntityById(id);
         ingredient.setImageUrl(imageUrl);
         ingredientRepository.save(ingredient);
     }
 
-
-    public void save(Ingredient ingredient) {
-        ingredientRepository.save(ingredient);
-    }
 }

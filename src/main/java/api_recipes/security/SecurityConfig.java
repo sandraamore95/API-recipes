@@ -79,12 +79,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasAnyRole( "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/ingredients/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/ingredients/{id}/upload-image").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/ingredients/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/ingredients/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/ingredients/**/upload-image").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
 
 
                         //  endpoints que requieren autenticación
                         .requestMatchers(HttpMethod.POST, "/api/recipes").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/recipes/{id}/upload-image").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/recipes").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/recipes/**").authenticated()
 
