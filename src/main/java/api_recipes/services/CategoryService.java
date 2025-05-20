@@ -59,14 +59,17 @@ public class CategoryService {
             throw new InvalidRequestException("El nombre de la categoría no puede estar vacío");
         }
 
-        // Verificar si ya existe
-        if (categoryRepository.existsByNameIgnoreCase(categoryName.trim())) {
-            throw new ResourceAlreadyExistsException("La categoría " + categoryName + " ya existe");
-        }
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
 
-        category.setName(categoryName.toUpperCase());
+        // Verificar si ya existe
+        String newName = categoryName.trim().toUpperCase();
+        if (!category.getName().equalsIgnoreCase(newName)
+                && categoryRepository.existsByNameIgnoreCase(newName)) {
+            throw new ResourceAlreadyExistsException("La categoría " + categoryName + " ya existe");
+        }
+
+        category.setName(newName);
         categoryRepository.save(category);
         return categoryMapper.toDto(category);
     }

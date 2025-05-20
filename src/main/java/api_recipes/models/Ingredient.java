@@ -25,6 +25,9 @@ public class Ingredient {
     @Enumerated(EnumType.STRING)
     private UnitMeasure unit_measure;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecipeIngredient> recipeIngredients = new HashSet<>();
 

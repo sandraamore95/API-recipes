@@ -49,6 +49,7 @@ public class FavoriteService {
 
         // Aumentar la popularidad de la receta cada vez que se marca favorita
         recipe.increasePopularity();
+        recipeRepository.save(recipe);
 
         Favorite favorite = new Favorite(user, recipe);
         Favorite savedFavorite = favoriteRepository.save(favorite);

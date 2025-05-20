@@ -1,4 +1,5 @@
 package api_recipes.controllers;
+
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/ingredients")
@@ -28,18 +30,29 @@ public class IngredientsController {
 
     public IngredientsController(IngredientService ingredientService, ImageUploadService imageUploadService) {
         this.ingredientService = ingredientService;
-        this.imageUploadService=imageUploadService;
+        this.imageUploadService = imageUploadService;
     }
 
-        @GetMapping
-        public ResponseEntity<?> getAllIngredients(
-                @RequestParam(required = false) String name) {
-        try{
-            return ResponseEntity.ok(ingredientService.searchIngredients(name));
-        }catch (Exception e) {
-                return ResponseEntity.internalServerError()
-                .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener los ingredientes."));
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllIngredients() {
+        try {
+            List<IngredientDto> ingredients = ingredientService.getAllIngredients();
+            return ResponseEntity.ok(ingredients);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al obtener los ingredientes."));
+        }
     }
+
+    @GetMapping
+    public ResponseEntity<?> searchIngredients(
+            @RequestParam(required = false) String name) {
+        try {
+            return ResponseEntity.ok(ingredientService.searchIngredients(name));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error al buscar  los ingredientes."));
+        }
     }
 
     @PostMapping
@@ -75,24 +88,32 @@ public class IngredientsController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteIngredient(@PathVariable Long id) {
+    @PutMapping("/disable/{id}")
+    public ResponseEntity<?> disabledIngredient(@PathVariable Long id) {
         try {
-
-            // Eliminar el directorio donde se encuentra la imagen (existe la carpeta)
-            Ingredient ingredient = ingredientService.getIngredientEntityById(id);
-            if (ingredient.getImageUrl() != null) {
-                imageUploadService.deleteDirectoryAndImage("ingredients", id);
-            }
-
-            ingredientService.deleteIngredient(id);
-            return ResponseEntity.ok(new SuccessResponse("Ingrediente eliminado correctamente"));
+            ingredientService.disableIngredient(id);
+            return ResponseEntity.ok(new SuccessResponse("Ingrediente desactivado correctamente"));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Error al eliminar el ingrediente"));
+        }
+    }
+
+
+    @PutMapping("/enable/{id}")
+    public ResponseEntity<?> enableIngredient(@PathVariable Long id) {
+        try {
+            ingredientService.enableIngredient(id);
+            return ResponseEntity.ok(new SuccessResponse("Ingrediente activado correctamente"));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_ERROR", "Error al activar el ingrediente"));
         }
     }
 
@@ -129,7 +150,7 @@ public class IngredientsController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Error en el manejo de archivos: " + e.getMessage()));
-        }catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("INTERNAL_ERROR", "Error al subir imagen: " + e.getMessage()));
         }

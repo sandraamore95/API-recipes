@@ -10,4 +10,5 @@ public class IngredientDto {
     private String name;
     private Ingredient.UnitMeasure unit_measure;
     private String imageUrl;
+    private boolean active;
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class IngredientService {
@@ -25,6 +26,12 @@ public class IngredientService {
         this.ingredientMapper=ingredientMapper;
     }
 
+
+    public List<IngredientDto> getAllIngredients() {
+        List<Ingredient> ingredients = ingredientRepository.findAll();
+        return ingredientMapper.toDtoList(ingredients);
+    }
+
     public List<IngredientDto> searchIngredients(String searchTerm) {
         List<Ingredient> ingredients;
         if (searchTerm != null && !searchTerm.isEmpty()) {
@@ -33,7 +40,9 @@ public class IngredientService {
             ingredients = ingredientRepository.findAll();
         }
 
-        return ingredientMapper.toDtoList(ingredients);
+        return ingredientMapper.toDtoList(ingredients.stream()
+                .filter(Ingredient::isActive)
+                .collect(Collectors.toList()));
     }
 
     public Ingredient getIngredientEntityById(Long id) {
@@ -54,6 +63,7 @@ public class IngredientService {
         Ingredient ingredient = new Ingredient();
         ingredient.setName(ingredientRequest.getName());
         ingredient.setUnit_measure(ingredientRequest.getUnitMeasure());
+        ingredient.setActive(true);
 
         Ingredient savedIngredient = ingredientRepository.save(ingredient);
         return ingredientMapper.toDto(savedIngredient);
@@ -64,16 +74,19 @@ public class IngredientService {
 
         // Verificar si existe el ingredinente al que voy a modificar
         Ingredient ingredient = ingredientRepository.findById(id)
+                .filter(Ingredient::isActive)
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
 
 
         // Verificar si ya existe el ingrediente
-        if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
-            throw new ResourceAlreadyExistsException("El ingrediente " + ingredientRequest.getName() + " ya existe");
+        String newName = ingredientRequest.getName().trim();
+        if (!ingredient.getName().equalsIgnoreCase(newName) &&
+                ingredientRepository.existsByNameIgnoreCase(newName)) {
+            throw new ResourceAlreadyExistsException("El ingrediente " + newName + " ya existe");
         }
 
         // Update campos
-        ingredient.setName(ingredientRequest.getName());
+        ingredient.setName(newName);
         ingredient.setUnit_measure(ingredientRequest.getUnitMeasure());
 
         ingredientRepository.save(ingredient);
@@ -81,12 +94,29 @@ public class IngredientService {
     }
 
     @Transactional
-    public void deleteIngredient(Long id) {
+    public void disableIngredient(Long id) {
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
-        ingredientRepository.delete(ingredient);
+
+        // Si ya esta activado no se hace nada
+        if (!ingredient.isActive()) {
+            return;
+        }
+
+        ingredient.setActive(false);
+        ingredientRepository.save(ingredient);
     }
 
+    @Transactional
+    public void enableIngredient(Long id) {
+        Ingredient ingredient = ingredientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
+
+        if (!ingredient.isActive()) {
+            ingredient.setActive(true);
+            ingredientRepository.save(ingredient);
+        }
+    }
 
     @Transactional
     public void updateIngredientImage(Long id, String imageUrl) {
@@ -94,5 +124,6 @@ public class IngredientService {
         ingredient.setImageUrl(imageUrl);
         ingredientRepository.save(ingredient);
     }
+
 
 }
