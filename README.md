@@ -12,9 +12,7 @@ API RESTful para gestión de recetas de cocina con sistema de autenticación y c
 - [Configuración](#-configuración)
 - [Documentación API](#-documentación-api)
 - [Seguridad](#-seguridad)
-- [Base de Datos](#-base-de-datos)
-- [Contribución](#-contribución)
-- [Licencia](#-licencia)
+
 
 ## 📝 Descripción
 API-recipes es una aplicación backend robusta desarrollada con Spring Boot que proporciona una plataforma completa para la gestión de recetas de cocina. Incluye funcionalidades como autenticación de usuarios, gestión de recetas, ingredientes, categorías y un sistema de favoritos.
@@ -125,13 +123,16 @@ MAIL_PASSWORD=tu_contraseña
 - `GET /api/recipes/{id}` - Obtener receta
 - `POST /api/recipes` - Crear receta
 - `PUT /api/recipes/{id}` - Actualizar receta
+- `PATCH /api/recipes/{id}/upload-image` - Actualizar imagen receta
 - `DELETE /api/recipes/{id}` - Eliminar receta
 
 #### Ingredientes
-- `GET /api/ingredients` - Listar ingredientes
+- `GET /api/ingredients` - Buscar ingredientes
 - `POST /api/ingredients` - Crear ingrediente
 - `PUT /api/ingredients/{id}` - Actualizar ingrediente
-- `DELETE /api/ingredients/{id}` - Eliminar ingrediente
+- `PATCH /api/ingredients/{id}/upload-image` - Actualizar imagen ingrediente
+- `PUT /api/disable/{id}` - Desabilitar ingrediente
+- `PUT /api/enable/{id}` - Habilitar ingrediente
 
 #### Favoritos
 - `GET /api/favorites` - Listar favoritos
