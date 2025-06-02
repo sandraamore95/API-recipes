@@ -2,6 +2,7 @@ package api_recipes.controllers;
 
 import api_recipes.exceptions.*;
 import api_recipes.models.User;
+import api_recipes.payload.dto.UserDto;
 import api_recipes.payload.request.ForgotPasswordRequest;
 import api_recipes.payload.request.LoginRequest;
 import api_recipes.payload.request.ResetPasswordRequest;
@@ -14,8 +15,6 @@ import api_recipes.security.services.UserDetailsImpl;
 import api_recipes.services.AccountService;
 import api_recipes.services.UserService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,11 +34,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    
 
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
-    private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
     private final AccountService accountService;
 
@@ -50,7 +48,6 @@ public class AuthController {
                           AccountService accountService) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
-        this.encoder = encoder;
         this.jwtUtils = jwtUtils;
         this.accountService = accountService;
     }
@@ -81,7 +78,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         try {
-            User newUser = userService.registerUser(signUpRequest);
+            UserDto newUser = userService.registerUser(signUpRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

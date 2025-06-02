@@ -75,9 +75,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/test/public/**").permitAll()
                         .requestMatchers("/images/**", "/images/ingredients/**").permitAll()
 
+                      
                         // Endpoints con restricciones de roles
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasAnyRole( "ADMIN")
+                        .requestMatchers("/api/users/**").hasRole( "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/ingredients/all").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/ingredients/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/ingredients/enable/**").hasRole("ADMIN")
@@ -88,8 +89,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
 
-
-                        //  endpoints que requieren autenticación
+                        // Endpoints que requieren autenticación
                         .requestMatchers(HttpMethod.POST, "/api/recipes").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/recipes/{id}/upload-image").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/recipes").authenticated()
@@ -102,11 +102,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/recipes/{id}/upload-image").authenticated()
 
-                        //Endpoint de account user
+                        // Endpoint de account user
                         .requestMatchers(HttpMethod.PATCH, "/api/account/change-email").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/account/change-password").authenticated()
-
-
 
                         .anyRequest().authenticated()
                 )
