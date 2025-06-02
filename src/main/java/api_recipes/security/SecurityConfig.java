@@ -103,7 +103,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/recipes/{id}/upload-image").authenticated()
 
                         //Endpoint de account user
-                        
+                        .requestMatchers(HttpMethod.PATCH, "/api/account/change-email").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/account/change-password").authenticated()
+
 
 
                         .anyRequest().authenticated()
