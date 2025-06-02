@@ -1,5 +1,6 @@
 package api_recipes.payload.request;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ public class LoginRequest {
     private String username;
 
     @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 8, message = "La  contraseña debe tener al menos 8 caracteres")
     private String password;
 
 }

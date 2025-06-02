@@ -102,6 +102,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/favorites/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/recipes/{id}/upload-image").authenticated()
 
+                        //Endpoint de account user
+                        
 
 
                         .anyRequest().authenticated()

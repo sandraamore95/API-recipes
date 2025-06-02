@@ -28,7 +28,7 @@ public class IngredientService {
 
 
     public List<IngredientDto> getAllIngredients() {
-        List<Ingredient> ingredients = ingredientRepository.findAll();
+        List<Ingredient> ingredients = ingredientRepository.findAll(); 
         return ingredientMapper.toDtoList(ingredients);
     }
 

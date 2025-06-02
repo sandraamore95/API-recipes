@@ -2,6 +2,7 @@ package api_recipes.services;
 
 import api_recipes.exceptions.ExpiredTokenException;
 import api_recipes.exceptions.InvalidTokenException;
+import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.models.TokenUser;
 import api_recipes.models.User;
@@ -13,6 +14,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -95,5 +98,29 @@ public class AccountService {
     }
 
 
+    public void changeEmail(Long userId, String newEmail) {
+        Optional<User> existingUser = userRepository.findByEmail(newEmail);
+        if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+            throw new ResourceAlreadyExistsException("El email ya está en uso por otro usuario");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        user.setEmail(newEmail);
+        userRepository.save(user);
+    }
+
+
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                throw new IllegalArgumentException("La contraseña actual es incorrecta");
+            }
+
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+        }
 
 }
