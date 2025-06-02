@@ -16,19 +16,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/ingredients")
-public class IngredientsController {
+public class IngredientController {
 
 
     private final IngredientService ingredientService;
     private final ImageUploadService imageUploadService;
 
-    public IngredientsController(IngredientService ingredientService, ImageUploadService imageUploadService) {
+    public IngredientController(IngredientService ingredientService, ImageUploadService imageUploadService) {
         this.ingredientService = ingredientService;
         this.imageUploadService = imageUploadService;
     }

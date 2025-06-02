@@ -16,10 +16,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
-public class CategoriesController {
+public class CategoryController {
     private final CategoryService categoryService;
 
-    public CategoriesController(CategoryService categoryService) {
+    public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
 
