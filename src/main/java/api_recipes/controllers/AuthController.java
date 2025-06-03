@@ -1,13 +1,11 @@
 package api_recipes.controllers;
 
-import api_recipes.exceptions.*;
 import api_recipes.models.User;
 import api_recipes.payload.dto.UserDto;
 import api_recipes.payload.request.ForgotPasswordRequest;
 import api_recipes.payload.request.LoginRequest;
 import api_recipes.payload.request.ResetPasswordRequest;
 import api_recipes.payload.request.SignupRequest;
-import api_recipes.payload.response.ErrorResponse;
 import api_recipes.payload.response.JwtResponse;
 import api_recipes.payload.response.SuccessResponse;
 import api_recipes.security.jwt.JwtUtils;
@@ -22,10 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,28 +29,24 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    
-
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final JwtUtils jwtUtils;
     private final AccountService accountService;
 
     public AuthController(AuthenticationManager authenticationManager,
-                          UserService userService,
-                          PasswordEncoder encoder,
-                          JwtUtils jwtUtils,
-                          AccountService accountService) {
+            UserService userService,
+            PasswordEncoder encoder,
+            JwtUtils jwtUtils,
+            AccountService accountService) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
         this.jwtUtils = jwtUtils;
         this.accountService = accountService;
     }
 
-
-    //LOGIN
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -74,59 +65,25 @@ public class AuthController {
                 roles));
     }
 
-    //REGISTER
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        try {
-            UserDto newUser = userService.registerUser(signUpRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
-        } catch (ResourceAlreadyExistsException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse("CONFLICT", ex.getMessage()));
-        } catch (InvalidRequestException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("INVALID_REQUEST", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
-        }
+    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+        UserDto newUser = userService.registerUser(signUpRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
-
-    //forgot password
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
-        try {
-            accountService.createPasswordResetTokenForUser(forgotPasswordRequest.getEmail());
-            return ResponseEntity.ok(new SuccessResponse("Se ha enviado un correo para restablecer tu contraseña."));
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("RESOURCE_NOT_FOUND", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado"));
-        }
+    public ResponseEntity<SuccessResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        accountService.createPasswordResetTokenForUser(forgotPasswordRequest.getEmail());
+        return ResponseEntity.ok(new SuccessResponse("Se ha enviado un correo para restablecer tu contraseña."));
     }
 
-    //reset password
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
-        try {
-            User user = accountService.validatePasswordResetToken(resetPasswordRequest.getToken());
-            accountService.updatePassword(user, resetPasswordRequest.getNewPassword());
-            accountService.invalidateToken(resetPasswordRequest.getToken());
-            return ResponseEntity.ok(new SuccessResponse("Contraseña actualizada correctamente."));
-        }
-        catch (InvalidTokenException | ExpiredTokenException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("INVALID_TOKEN", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("INTERNAL_ERROR", "Ocurrió un error inesperado al restablecer la contraseña."));
-        }
+    public ResponseEntity<SuccessResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        User user = accountService.validatePasswordResetToken(resetPasswordRequest.getToken());
+        accountService.updatePassword(user, resetPasswordRequest.getNewPassword());
+        accountService.invalidateToken(resetPasswordRequest.getToken());
+        return ResponseEntity.ok(new SuccessResponse("Contraseña actualizada correctamente."));
     }
-
 }

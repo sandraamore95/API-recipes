@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -59,6 +60,7 @@ public class UserService {
 
     }
 
+    @Transactional
     // Crear usuario
     public UserDto registerUser(SignupRequest signUpRequest) {
         // Verificar si el nombre de usuario ya está registrado
@@ -89,6 +91,7 @@ public class UserService {
         return userMapper.toDTO(savedUser);
     }
 
+    @Transactional
     // Actualizar usuario
     public UserDto updateUser(Long id, UserRequest userRequest) {
         User user = userRepository.findById(id)
@@ -108,8 +111,10 @@ public class UserService {
 
         user.setUsername(userRequest.getUsername());
         user.setEmail(userRequest.getEmail());
+      
 
         // Update roles
+        
         if (userRequest.getRoles() != null && !userRequest.getRoles().isEmpty()) {
             Set<Role> roles = assignRoles(userRequest.getRoles());
             user.setRoles(roles);
@@ -119,6 +124,7 @@ public class UserService {
         return userMapper.toDTO(updatedUser);
     }
 
+    @Transactional
     // Eliminar usuario
     public void deleteUser(Long userId) {
         User deleteUser = userRepository.findById(userId)
@@ -128,7 +134,7 @@ public class UserService {
 
 
     // METODOS 
-    
+
     private Set<Role> assignRoles(Set<String> strRoles) {
         Set<Role> roles = new HashSet<>();
         if (strRoles == null || strRoles.isEmpty())
@@ -136,8 +142,9 @@ public class UserService {
 
         return strRoles.stream()
                 .map(role -> {
+                    System.out.println(role);
                     try {
-                        Role.RoleName roleName = Role.RoleName.valueOf("ROLE_" + role.toUpperCase());
+                        Role.RoleName roleName = Role.RoleName.valueOf(role.toUpperCase());
                         return roleRepository.findByName(roleName)
                                 .orElseThrow(() -> new ResourceNotFoundException("Rol " + role + " no encontrado"));
                     } catch (IllegalArgumentException e) {

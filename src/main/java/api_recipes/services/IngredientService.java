@@ -1,11 +1,8 @@
 package api_recipes.services;
-import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.mapper.IngredientMapper;
-import api_recipes.models.Category;
 import api_recipes.models.Ingredient;
-import api_recipes.models.Recipe;
 import api_recipes.payload.dto.IngredientDto;
 import api_recipes.payload.request.IngredientRequest;
 import api_recipes.repository.IngredientRepository;
@@ -55,6 +52,7 @@ public class IngredientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada"));
     }
 
+    @Transactional
     public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
         if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
             throw new ResourceAlreadyExistsException("El ingrediente ya existe");
@@ -93,7 +91,7 @@ public class IngredientService {
         return ingredientMapper.toDto(ingredient);
     }
 
-    @Transactional
+    
     public void disableIngredient(Long id) {
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
@@ -107,7 +105,7 @@ public class IngredientService {
         ingredientRepository.save(ingredient);
     }
 
-    @Transactional
+    
     public void enableIngredient(Long id) {
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));

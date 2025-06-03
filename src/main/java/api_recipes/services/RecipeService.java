@@ -25,19 +25,15 @@ public class RecipeService {
 
     private final RecipeRepository recipeRepository;
     private final RecipeMapper recipeMapper;
-    private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
-    private final RecipeIngredientRepository recipeIngredientRepository;
 
-    public RecipeService(RecipeRepository recipeRepository, UserRepository userRepository, RecipeMapper recipeMapper, CategoryRepository categoryRepository,
-                         IngredientRepository ingredientRepository,RecipeIngredientRepository recipeIngredientRepository) {
+    public RecipeService(RecipeRepository recipeRepository,  RecipeMapper recipeMapper, CategoryRepository categoryRepository,
+                         IngredientRepository ingredientRepository) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
-        this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.ingredientRepository = ingredientRepository;
-        this.recipeIngredientRepository=recipeIngredientRepository;
     }
 
 
