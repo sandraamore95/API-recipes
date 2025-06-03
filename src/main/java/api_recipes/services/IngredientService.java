@@ -6,6 +6,8 @@ import api_recipes.models.Ingredient;
 import api_recipes.payload.dto.IngredientDto;
 import api_recipes.payload.request.IngredientRequest;
 import api_recipes.repository.IngredientRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class IngredientService {
-
+    private static final Logger logger = LoggerFactory.getLogger(IngredientService.class);
     private final IngredientRepository ingredientRepository;
     private final IngredientMapper ingredientMapper;
 
@@ -23,38 +25,58 @@ public class IngredientService {
         this.ingredientMapper=ingredientMapper;
     }
 
-
     public List<IngredientDto> getAllIngredients() {
+        logger.info("Obteniendo todos los ingredientes");
         List<Ingredient> ingredients = ingredientRepository.findAll(); 
+        logger.debug("Se encontraron {} ingredientes", ingredients.size());
         return ingredientMapper.toDtoList(ingredients);
     }
 
     public List<IngredientDto> searchIngredients(String searchTerm) {
+        logger.info("Buscando ingredientes con término: {}", searchTerm);
+        
         List<Ingredient> ingredients;
         if (searchTerm != null && !searchTerm.isEmpty()) {
             ingredients = ingredientRepository.findByNameContainingIgnoreCase(searchTerm);
+            logger.debug("Se encontraron {} ingredientes que coinciden con el término de búsqueda", ingredients.size());
         } else {
             ingredients = ingredientRepository.findAll();
+            logger.debug("Se obtuvieron todos los ingredientes (sin término de búsqueda)");
         }
 
-        return ingredientMapper.toDtoList(ingredients.stream()
+        List<IngredientDto> activeIngredients = ingredientMapper.toDtoList(ingredients.stream()
                 .filter(Ingredient::isActive)
                 .collect(Collectors.toList()));
+        
+        logger.debug("Se filtraron {} ingredientes activos", activeIngredients.size());
+        return activeIngredients;
     }
 
     public Ingredient getIngredientEntityById(Long id) {
+        logger.info("Buscando entidad de ingrediente por ID: {}", id);
         return ingredientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada"));
+                .orElseThrow(() -> {
+                    logger.error("Ingrediente no encontrado con ID: {}", id);
+                    return new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada");
+                });
     }
-    public IngredientDto getIngredientById(Long id){
+
+    public IngredientDto getIngredientById(Long id) {
+        logger.info("Buscando ingrediente por ID: {}", id);
         return ingredientRepository.findById(id)
                 .map(ingredientMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada"));
+                .orElseThrow(() -> {
+                    logger.error("Ingrediente no encontrado con ID: {}", id);
+                    return new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada");
+                });
     }
 
     @Transactional
     public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
+        logger.info("Iniciando creación de nuevo ingrediente: {}", ingredientRequest.getName());
+        
         if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
+            logger.warn("Intento de crear ingrediente duplicado: {}", ingredientRequest.getName());
             throw new ResourceAlreadyExistsException("El ingrediente ya existe");
         }
 
@@ -64,30 +86,33 @@ public class IngredientService {
         ingredient.setActive(true);
 
         Ingredient savedIngredient = ingredientRepository.save(ingredient);
+        logger.info("Ingrediente creado exitosamente con ID: {}", savedIngredient.getId());
         return ingredientMapper.toDto(savedIngredient);
     }
 
     @Transactional
     public IngredientDto updateIngredient(Long id, IngredientRequest ingredientRequest) {
+        logger.info("Iniciando actualización de ingrediente ID: {}", id);
 
-        // Verificar si existe el ingredinente al que voy a modificar
         Ingredient ingredient = ingredientRepository.findById(id)
                 .filter(Ingredient::isActive)
-                .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
+                .orElseThrow(() -> {
+                    logger.error("Ingrediente no encontrado o inactivo - ID: {}", id);
+                    return new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id);
+                });
 
-
-        // Verificar si ya existe el ingrediente
         String newName = ingredientRequest.getName().trim();
         if (!ingredient.getName().equalsIgnoreCase(newName) &&
                 ingredientRepository.existsByNameIgnoreCase(newName)) {
+            logger.warn("Intento de actualización con nombre duplicado: {}", newName);
             throw new ResourceAlreadyExistsException("El ingrediente " + newName + " ya existe");
         }
 
-        // Update campos
         ingredient.setName(newName);
         ingredient.setUnit_measure(ingredientRequest.getUnitMeasure());
 
         ingredientRepository.save(ingredient);
+        logger.info("Ingrediente actualizado exitosamente - ID: {}", id);
         return ingredientMapper.toDto(ingredient);
     }
 

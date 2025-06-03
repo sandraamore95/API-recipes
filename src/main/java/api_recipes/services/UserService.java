@@ -19,6 +19,8 @@ import api_recipes.repository.RecipeRepository;
 import api_recipes.services.RecipeService;
 import api_recipes.services.ImageUploadService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final RoleRepository roleRepository;
@@ -59,12 +61,14 @@ public class UserService {
     }
 
     public Page<UserDto> getAllPageableUser(int page, int pageSize) {
+        logger.info("Obteniendo usuarios paginados - página: {}, tamaño: {}", page, pageSize);
         Pageable pageable = PageRequest.of(page, pageSize);
         return userRepository.findAll(pageable).map(userMapper::toDTO);
     }
 
     // Obtener todos los usuarios
     public List<UserDto> getAllUsers() {
+        logger.info("Obteniendo todos los usuarios");
         return userRepository.findAll()
                 .stream()
                 .map(userMapper::toDTO)
@@ -73,65 +77,75 @@ public class UserService {
 
     // Obtener usuario por ID
     public UserDto getUserById(Long id) {
+        logger.info("Buscando usuario por ID: {}", id);
         return userRepository.findById(id)
                 .map(userMapper::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario  con el id '" + id + "' no encontrado"));
-
+                .orElseThrow(() -> {
+                    logger.error("Usuario no encontrado con ID: {}", id);
+                    return new ResourceNotFoundException("Usuario con el id '" + id + "' no encontrado");
+                });
     }
 
     @Transactional
     // Crear usuario
     public UserDto registerUser(SignupRequest signUpRequest) {
-        // Verificar si el nombre de usuario ya está registrado
+        logger.info("Iniciando registro de nuevo usuario: {}", signUpRequest.getUsername());
+        
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+            logger.warn("Intento de registro con username duplicado: {}", signUpRequest.getUsername());
             throw new ResourceAlreadyExistsException("El nombre de usuario ya está en uso");
         }
 
-        // Verificar si el email ya está registrado
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+            logger.warn("Intento de registro con email duplicado: {}", signUpRequest.getEmail());
             throw new ResourceAlreadyExistsException("El email ya está en uso!");
         }
 
-        // Crear nuevo usuario
         User user = User.builder()
                 .username(signUpRequest.getUsername())
                 .email(signUpRequest.getEmail())
                 .password(encoder.encode(signUpRequest.getPassword()))
                 .build();
 
-        // Asignar roles
         Set<Role> roles = assignRoles(signUpRequest.getRoles());
         if (roles.isEmpty()) {
             roles.add(roleRepository.findByName(Role.RoleName.ROLE_USER)
-                    .orElseThrow(() -> new ResourceNotFoundException("Rol por defecto no encontrado.")));
+                    .orElseThrow(() -> {
+                        logger.error("Rol por defecto ROLE_USER no encontrado");
+                        return new ResourceNotFoundException("Rol por defecto no encontrado.");
+                    }));
         }
         user.setRoles(roles);
         User savedUser = userRepository.save(user);
+        logger.info("Usuario registrado exitosamente con ID: {}", savedUser.getId());
         return userMapper.toDTO(savedUser);
     }
 
     @Transactional
     // Actualizar usuario
     public UserDto updateUser(Long id, UserRequest userRequest) {
+        logger.info("Iniciando actualización de usuario con ID: {}", id);
+        
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> {
+                    logger.error("Usuario no encontrado para actualización - ID: {}", id);
+                    return new ResourceNotFoundException("Usuario no encontrado");
+                });
 
-        // Verificar si el nuevo username ya existe (excepto para el usuario actual)
         if (!user.getUsername().equals(userRequest.getUsername()) &&
                 userRepository.existsByUsername(userRequest.getUsername())) {
+            logger.warn("Intento de actualización con username duplicado: {}", userRequest.getUsername());
             throw new ResourceAlreadyExistsException("El nombre de usuario ya está en uso");
         }
 
-        // Verificar si el nuevo email ya existe (excepto para el usuario actual)
         if (!user.getEmail().equals(userRequest.getEmail()) &&
                 userRepository.existsByEmail(userRequest.getEmail())) {
+            logger.warn("Intento de actualización con email duplicado: {}", userRequest.getEmail());
             throw new ResourceAlreadyExistsException("El email ya está en uso");
         }
 
         user.setUsername(userRequest.getUsername());
         user.setEmail(userRequest.getEmail());
-
-        // Update roles
 
         if (userRequest.getRoles() != null && !userRequest.getRoles().isEmpty()) {
             Set<Role> roles = assignRoles(userRequest.getRoles());
@@ -139,44 +153,51 @@ public class UserService {
         }
 
         User updatedUser = userRepository.save(user);
+        logger.info("Usuario actualizado exitosamente - ID: {}", updatedUser.getId());
         return userMapper.toDTO(updatedUser);
     }
 
     @Transactional
     public void deleteUserAndRelations(Long userId) throws IOException {
+        logger.info("Iniciando eliminación de usuario y sus relaciones - ID: {}", userId);
+        
         User deleteUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el usuario con ID: " + userId));
+                .orElseThrow(() -> {
+                    logger.error("Usuario no encontrado para eliminación - ID: {}", userId);
+                    return new ResourceNotFoundException("No se encontró el usuario con ID: " + userId);
+                });
 
-        // Eliminar tokens del usuario
         tokenRepository.deleteAllByUserId(userId);
+        logger.debug("Tokens eliminados para usuario - ID: {}", userId);
 
-        // Eliminar los favoritos del usuario
         List<Favorite> userFavorites = favoriteRepository.findAllByUser(deleteUser);
         favoriteRepository.deleteAll(userFavorites);
+        logger.debug("Favoritos eliminados para usuario - ID: {}", userId);
 
-        // Eliminar las recetas del usuario
         List<Recipe> myRecipes = recipeRepository.findByUserId(deleteUser.getId());
         for (Recipe recipe : myRecipes) {
-            // Eliminar la imagen de la receta si existe
             if (recipe.getImageUrl() != null) {
                 try {
                     imageUploadService.deleteDirectoryAndImage("recipes", recipe.getId());
+                    logger.debug("Imagen de receta eliminada - ID: {}", recipe.getId());
                 } catch (IOException e) {
+                    logger.error("Error al eliminar imagen de receta - ID: {}, Error: {}", recipe.getId(), e.getMessage());
                     throw new IOException("Error al eliminar la imagen de la receta: " + e.getMessage());
                 }
             }
-            
-           
         }
-        // Eliminar laS recetaS 
+        
         recipeRepository.deleteAll(myRecipes);
-        // Eliminar el usuario
+        logger.debug("Recetas eliminadas para usuario - ID: {}", userId);
+        
         userRepository.delete(deleteUser);
+        logger.info("Usuario y todas sus relaciones eliminadas exitosamente - ID: {}", userId);
     }
 
     // METODOS
 
     private Set<Role> assignRoles(Set<String> strRoles) {
+        logger.debug("Asignando roles: {}", strRoles);
         Set<Role> roles = new HashSet<>();
         if (strRoles == null || strRoles.isEmpty())
             return roles;
@@ -186,8 +207,12 @@ public class UserService {
                     try {
                         Role.RoleName roleName = Role.RoleName.valueOf(role.toUpperCase());
                         return roleRepository.findByName(roleName)
-                                .orElseThrow(() -> new ResourceNotFoundException("Rol " + role + " no encontrado"));
+                                .orElseThrow(() -> {
+                                    logger.error("Rol no encontrado: {}", role);
+                                    return new ResourceNotFoundException("Rol " + role + " no encontrado");
+                                });
                     } catch (IllegalArgumentException e) {
+                        logger.error("Rol inválido: {}", role);
                         throw new InvalidRequestException("Rol inválido: " + role);
                     }
                 })
