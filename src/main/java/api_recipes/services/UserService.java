@@ -35,6 +35,13 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio que maneja todas las operaciones relacionadas con usuarios.
+ * Incluye funcionalidades para registro, actualización, eliminación y gestión de roles.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
 @Service
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -47,6 +54,18 @@ public class UserService {
     private final FavoriteRepository favoriteRepository;
     private final TokenUserRepository tokenRepository;
 
+    /**
+     * Constructor del servicio de usuarios.
+     *
+     * @param userRepository Repositorio de usuarios
+     * @param userMapper Mapper para convertir entre entidades y DTOs
+     * @param roleRepository Repositorio de roles
+     * @param passwordEncoder Codificador de contraseñas
+     * @param recipeRepository Repositorio de recetas
+     * @param imageUploadService Servicio de carga de imágenes
+     * @param favoriteRepository Repositorio de favoritos
+     * @param tokenRepository Repositorio de tokens
+     */
     public UserService(UserRepository userRepository, UserMapper userMapper, RoleRepository roleRepository,
             PasswordEncoder passwordEncoder, RecipeRepository recipeRepository, ImageUploadService imageUploadService,
             FavoriteRepository favoriteRepository, TokenUserRepository tokenRepository) {
@@ -60,13 +79,24 @@ public class UserService {
         this.tokenRepository = tokenRepository;
     }
 
+    /**
+     * Obtiene una página de usuarios.
+     *
+     * @param page Número de página (0-based)
+     * @param pageSize Tamaño de la página
+     * @return Página de usuarios convertidos a DTOs
+     */
     public Page<UserDto> getAllPageableUser(int page, int pageSize) {
         logger.info("Obteniendo usuarios paginados - página: {}, tamaño: {}", page, pageSize);
         Pageable pageable = PageRequest.of(page, pageSize);
         return userRepository.findAll(pageable).map(userMapper::toDTO);
     }
 
-    // Obtener todos los usuarios
+    /**
+     * Obtiene todos los usuarios del sistema.
+     *
+     * @return Lista de usuarios convertidos a DTOs
+     */
     public List<UserDto> getAllUsers() {
         logger.info("Obteniendo todos los usuarios");
         return userRepository.findAll()
@@ -75,7 +105,13 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    // Obtener usuario por ID
+    /**
+     * Obtiene un usuario por su ID.
+     *
+     * @param id ID del usuario a buscar
+     * @return Usuario convertido a DTO
+     * @throws ResourceNotFoundException si el usuario no existe
+     */
     public UserDto getUserById(Long id) {
         logger.info("Buscando usuario por ID: {}", id);
         return userRepository.findById(id)
@@ -86,8 +122,14 @@ public class UserService {
                 });
     }
 
+    /**
+     * Registra un nuevo usuario en el sistema.
+     *
+     * @param signUpRequest Datos del usuario a registrar
+     * @return Usuario registrado convertido a DTO
+     * @throws ResourceAlreadyExistsException si el username o email ya existen
+     */
     @Transactional
-    // Crear usuario
     public UserDto registerUser(SignupRequest signUpRequest) {
         logger.info("Iniciando registro de nuevo usuario: {}", signUpRequest.getUsername());
         
@@ -121,8 +163,16 @@ public class UserService {
         return userMapper.toDTO(savedUser);
     }
 
+    /**
+     * Actualiza los datos de un usuario existente.
+     *
+     * @param id ID del usuario a actualizar
+     * @param userRequest Nuevos datos del usuario
+     * @return Usuario actualizado convertido a DTO
+     * @throws ResourceNotFoundException si el usuario no existe
+     * @throws ResourceAlreadyExistsException si el nuevo username o email ya existen
+     */
     @Transactional
-    // Actualizar usuario
     public UserDto updateUser(Long id, UserRequest userRequest) {
         logger.info("Iniciando actualización de usuario con ID: {}", id);
         
@@ -157,6 +207,13 @@ public class UserService {
         return userMapper.toDTO(updatedUser);
     }
 
+    /**
+     * Elimina un usuario y todas sus relaciones del sistema.
+     *
+     * @param userId ID del usuario a eliminar
+     * @throws ResourceNotFoundException si el usuario no existe
+     * @throws IOException si hay un error al eliminar archivos asociados
+     */
     @Transactional
     public void deleteUserAndRelations(Long userId) throws IOException {
         logger.info("Iniciando eliminación de usuario y sus relaciones - ID: {}", userId);
@@ -194,8 +251,14 @@ public class UserService {
         logger.info("Usuario y todas sus relaciones eliminadas exitosamente - ID: {}", userId);
     }
 
-    // METODOS
-
+    /**
+     * Asigna roles a un usuario basado en una lista de nombres de roles.
+     *
+     * @param strRoles Conjunto de nombres de roles a asignar
+     * @return Conjunto de roles asignados
+     * @throws ResourceNotFoundException si algún rol no existe
+     * @throws InvalidRequestException si algún rol es inválido
+     */
     private Set<Role> assignRoles(Set<String> strRoles) {
         logger.debug("Asignando roles: {}", strRoles);
         Set<Role> roles = new HashSet<>();
@@ -218,5 +281,4 @@ public class UserService {
                 })
                 .collect(Collectors.toSet());
     }
-
 }

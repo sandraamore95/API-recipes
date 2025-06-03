@@ -14,17 +14,36 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Servicio que maneja todas las operaciones relacionadas con categorías.
+ * Incluye funcionalidades para crear, actualizar, eliminar y consultar categorías
+ * de recetas.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
 @Service
 public class CategoryService {
     private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
+    /**
+     * Constructor del servicio de categorías.
+     *
+     * @param categoryRepository Repositorio de categorías
+     * @param categoryMapper Mapper para convertir entre entidades y DTOs
+     */
     public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
     }
 
+    /**
+     * Obtiene todas las categorías del sistema.
+     *
+     * @return Lista de categorías convertidas a DTOs
+     */
     public List<CategoryDto> getAllCategories() {
         logger.info("Obteniendo todas las categorías");
         List<Category> categories = categoryRepository.findAll();
@@ -32,6 +51,13 @@ public class CategoryService {
         return categoryMapper.toDtoList(categories);
     }
 
+    /**
+     * Obtiene una categoría por su ID.
+     *
+     * @param id ID de la categoría a buscar
+     * @return Categoría convertida a DTO
+     * @throws ResourceNotFoundException si la categoría no existe
+     */
     public CategoryDto getCategoryById(Long id) {
         logger.info("Buscando categoría por ID: {}", id);
         return categoryRepository.findById(id)
@@ -42,6 +68,14 @@ public class CategoryService {
                 });
     }
 
+    /**
+     * Crea una nueva categoría.
+     *
+     * @param categoryName Nombre de la categoría a crear
+     * @return Categoría creada convertida a DTO
+     * @throws InvalidRequestException si el nombre está vacío
+     * @throws ResourceAlreadyExistsException si ya existe una categoría con el mismo nombre
+     */
     @Transactional
     public CategoryDto createCategory(String categoryName) {
         logger.info("Iniciando creación de nueva categoría: {}", categoryName);
@@ -63,6 +97,16 @@ public class CategoryService {
         return categoryMapper.toDto(saved);
     }
 
+    /**
+     * Actualiza una categoría existente.
+     *
+     * @param categoryName Nuevo nombre de la categoría
+     * @param id ID de la categoría a actualizar
+     * @return Categoría actualizada convertida a DTO
+     * @throws InvalidRequestException si el nombre está vacío
+     * @throws ResourceNotFoundException si la categoría no existe
+     * @throws ResourceAlreadyExistsException si ya existe otra categoría con el nuevo nombre
+     */
     @Transactional
     public CategoryDto updateCategory(String categoryName, Long id) {
         logger.info("Iniciando actualización de categoría ID: {} con nuevo nombre: {}", id, categoryName);
@@ -91,6 +135,12 @@ public class CategoryService {
         return categoryMapper.toDto(category);
     }
 
+    /**
+     * Elimina una categoría.
+     *
+     * @param id ID de la categoría a eliminar
+     * @throws ResourceNotFoundException si la categoría no existe
+     */
     @Transactional
     public void deleteCategory(Long id) {
         logger.info("Iniciando eliminación de categoría ID: {}", id);

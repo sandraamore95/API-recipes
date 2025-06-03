@@ -16,6 +16,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+/**
+ * Servicio que maneja todas las operaciones relacionadas con la carga y eliminación
+ * de imágenes. Incluye funcionalidades para validar, guardar y eliminar imágenes
+ * de usuarios y recetas.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
 @Service
 public class ImageUploadService {
     private static final Logger logger = LoggerFactory.getLogger(ImageUploadService.class);
@@ -34,8 +42,19 @@ public class ImageUploadService {
 
     // ingredients | recipes -> baseDir
     // ingredient  | recipes -> prefix
+    /**
+     * Carga una imagen al servidor.
+     *
+     * @param file Archivo de imagen a cargar
+     * @param baseDir Directorio base donde se guardará la imagen
+     * @param prefix Prefijo para el nombre del archivo
+     * @param id ID del recurso (usuario o receta) al que pertenece la imagen
+     * @return URL de la imagen cargada
+     * @throws IOException si hay un error al guardar el archivo
+     * @throws InvalidRequestException si el archivo no cumple con los requisitos
+     */
     public String uploadImage(MultipartFile file, String baseDir, String prefix, Long id) throws IOException {
-        logger.info("Iniciando subida de imagen - Directorio base: {}, Prefijo: {}, ID: {}", baseDir, prefix, id);
+        logger.info("Iniciando carga de imagen para {} ID: {}", baseDir, id);
         
         validateFile(file);
 
@@ -61,11 +80,19 @@ public class ImageUploadService {
         return imageUrl;
     }
 
+    /**
+     * Elimina una imagen del servidor.
+     *
+     * @param imageUrl URL de la imagen a eliminar
+     * @param baseDir Directorio base donde se encuentra la imagen
+     * @param id ID del recurso (usuario o receta) al que pertenece la imagen
+     * @throws IOException si hay un error al eliminar el archivo
+     */
     public void deleteImage(String imageUrl, String baseDir, Long id) throws IOException {
-        logger.info("Iniciando eliminación de imagen - URL: {}, Directorio base: {}, ID: {}", imageUrl, baseDir, id);
-
-        if (imageUrl == null || imageUrl.trim().isEmpty()) {
-            logger.warn("URL de imagen vacía o nula");
+        logger.info("Iniciando eliminación de imagen: {}", imageUrl);
+        
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            logger.warn("URL de imagen vacía para eliminación");
             return;
         }
 
@@ -87,6 +114,12 @@ public class ImageUploadService {
         logger.info("Imagen eliminada exitosamente");
     }
 
+    /**
+     * Valida que el archivo cumpla con los requisitos establecidos.
+     *
+     * @param file Archivo a validar
+     * @throws InvalidRequestException si el archivo no cumple con los requisitos
+     */
     private void validateFile(MultipartFile file) {
         logger.debug("Validando archivo: {}", file.getOriginalFilename());
 
@@ -121,10 +154,23 @@ public class ImageUploadService {
         logger.debug("Archivo validado exitosamente");
     }
 
+    /**
+     * Obtiene la extensión de un archivo.
+     *
+     * @param filename Nombre del archivo
+     * @return Extensión del archivo
+     */
     private String getFileExtension(String filename) {
         return filename.substring(filename.lastIndexOf(".")).toLowerCase();
     }
 
+    /**
+     * Elimina un directorio y su contenido.
+     *
+     * @param baseDir Directorio base a eliminar
+     * @param id ID del recurso
+     * @throws IOException si hay un error al eliminar el directorio
+     */
     public void deleteDirectoryAndImage(String baseDir, Long id) throws IOException {
         logger.info("Iniciando eliminación de directorio y sus contenidos - Directorio base: {}, ID: {}", baseDir, id);
 

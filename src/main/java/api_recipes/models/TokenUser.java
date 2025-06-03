@@ -2,25 +2,40 @@ package api_recipes.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
-@Entity
-@Getter
-@Setter
+/**
+ * Entidad que representa un token de usuario en el sistema.
+ * Esta clase se utiliza para manejar tokens de restablecimiento de contraseña
+ * y otros tokens temporales asociados a usuarios.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
+@Entity
+@Table(name = "tokens")
 public class TokenUser {
+    /**
+     * Identificador único del token.
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    /**
+     * Token generado para el usuario.
+     * Debe ser único en el sistema.
+     */
+    @Column(nullable = false, unique = true)
     private String token;
 
     @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.PERSIST})

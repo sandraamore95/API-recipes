@@ -17,6 +17,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Servicio que maneja todas las operaciones relacionadas con recetas favoritas.
+ * Incluye funcionalidades para agregar, eliminar y consultar recetas favoritas
+ * de los usuarios.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
 @Service
 public class FavoriteService {
     private static final Logger logger = LoggerFactory.getLogger(FavoriteService.class);
@@ -24,13 +32,26 @@ public class FavoriteService {
     private final RecipeRepository recipeRepository;
     private final FavoriteMapper favoriteMapper;
 
+    /**
+     * Constructor del servicio de favoritos.
+     *
+     * @param favoriteRepository Repositorio de favoritos
+     * @param recipeRepository Repositorio de recetas
+     * @param favoriteMapper Mapper para convertir entre entidades y DTOs de favoritos
+     */
     public FavoriteService(FavoriteRepository favoriteRepository,
-                           RecipeRepository recipeRepository,FavoriteMapper favoriteMapper) {
+                           RecipeRepository recipeRepository, FavoriteMapper favoriteMapper) {
         this.favoriteRepository = favoriteRepository;
         this.recipeRepository = recipeRepository;
         this.favoriteMapper=favoriteMapper;
     }
 
+    /**
+     * Obtiene todas las recetas favoritas de un usuario.
+     *
+     * @param user Usuario del cual obtener los favoritos
+     * @return Lista de recetas favoritas convertidas a DTOs
+     */
     public List<FavoriteDto> getUserFavorites(User user) {
         logger.info("Obteniendo favoritos del usuario: {}", user.getUsername());
         List<Favorite> favorites = favoriteRepository.findAllByUser(user);
@@ -38,6 +59,15 @@ public class FavoriteService {
         return favoriteMapper.toDtoList(favorites);
     }
 
+    /**
+     * Agrega una receta a los favoritos de un usuario.
+     *
+     * @param user Usuario al cual agregar la receta favorita
+     * @param recipeId ID de la receta a agregar a favoritos
+     * @return Receta agregada a favoritos convertida a DTO
+     * @throws ResourceNotFoundException si la receta no existe
+     * @throws ResourceAlreadyExistsException si la receta ya está en favoritos
+     */
     @Transactional
     public FavoriteDto addFavorite(User user, Long recipeId) {
         logger.info("Agregando receta a favoritos - Usuario: {}, Receta ID: {}", user.getUsername(), recipeId);
@@ -67,6 +97,13 @@ public class FavoriteService {
         return favoriteMapper.toDto(savedFavorite);
     }
 
+    /**
+     * Elimina una receta de los favoritos de un usuario.
+     *
+     * @param user Usuario del cual eliminar la receta favorita
+     * @param recipeId ID de la receta a eliminar de favoritos
+     * @throws ResourceNotFoundException si la receta no está en favoritos
+     */
     @Transactional
     public void removeFavorite(User user, Long recipeId) {
         logger.info("Eliminando receta de favoritos - Usuario: {}, Receta ID: {}", user.getUsername(), recipeId);

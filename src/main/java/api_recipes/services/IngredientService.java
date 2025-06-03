@@ -1,4 +1,6 @@
 package api_recipes.services;
+
+import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
 import api_recipes.mapper.IngredientMapper;
@@ -14,24 +16,49 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio que maneja todas las operaciones relacionadas con ingredientes.
+ * Incluye funcionalidades para crear, actualizar, eliminar y consultar ingredientes,
+ * así como búsqueda por nombre.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
 @Service
 public class IngredientService {
     private static final Logger logger = LoggerFactory.getLogger(IngredientService.class);
     private final IngredientRepository ingredientRepository;
     private final IngredientMapper ingredientMapper;
 
-    public IngredientService(IngredientRepository ingredientRepository,IngredientMapper ingredientMapper) {
-        this.ingredientRepository=ingredientRepository;
-        this.ingredientMapper=ingredientMapper;
+    /**
+     * Constructor del servicio de ingredientes.
+     *
+     * @param ingredientRepository Repositorio de ingredientes
+     * @param ingredientMapper Mapper para convertir entre entidades y DTOs
+     */
+    public IngredientService(IngredientRepository ingredientRepository, IngredientMapper ingredientMapper) {
+        this.ingredientRepository = ingredientRepository;
+        this.ingredientMapper = ingredientMapper;
     }
 
+    /**
+     * Obtiene todos los ingredientes del sistema.
+     *
+     * @return Lista de ingredientes convertidos a DTOs
+     */
     public List<IngredientDto> getAllIngredients() {
         logger.info("Obteniendo todos los ingredientes");
-        List<Ingredient> ingredients = ingredientRepository.findAll(); 
+        List<Ingredient> ingredients = ingredientRepository.findAll();
         logger.debug("Se encontraron {} ingredientes", ingredients.size());
         return ingredientMapper.toDtoList(ingredients);
     }
 
+    /**
+     * Busca ingredientes por nombre.
+     *
+     * @param searchTerm Término de búsqueda
+     * @return Lista de ingredientes que coinciden con el término de búsqueda
+     */
     public List<IngredientDto> searchIngredients(String searchTerm) {
         logger.info("Buscando ingredientes con término: {}", searchTerm);
         
@@ -52,6 +79,13 @@ public class IngredientService {
         return activeIngredients;
     }
 
+    /**
+     * Obtiene una entidad de ingrediente por su ID.
+     *
+     * @param id ID del ingrediente a buscar
+     * @return Entidad de ingrediente
+     * @throws ResourceNotFoundException si el ingrediente no existe
+     */
     public Ingredient getIngredientEntityById(Long id) {
         logger.info("Buscando entidad de ingrediente por ID: {}", id);
         return ingredientRepository.findById(id)
@@ -61,27 +95,47 @@ public class IngredientService {
                 });
     }
 
+    /**
+     * Obtiene un ingrediente por su ID.
+     *
+     * @param id ID del ingrediente a buscar
+     * @return Ingrediente convertido a DTO
+     * @throws ResourceNotFoundException si el ingrediente no existe
+     */
     public IngredientDto getIngredientById(Long id) {
         logger.info("Buscando ingrediente por ID: {}", id);
         return ingredientRepository.findById(id)
                 .map(ingredientMapper::toDto)
                 .orElseThrow(() -> {
                     logger.error("Ingrediente no encontrado con ID: {}", id);
-                    return new ResourceNotFoundException("Ingrediente con el id '" + id + "' no encontrada");
+                    return new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id);
                 });
     }
 
+    /**
+     * Crea un nuevo ingrediente.
+     *
+     * @param ingredientRequest Datos del ingrediente a crear
+     * @return Ingrediente creado convertido a DTO
+     * @throws InvalidRequestException si el nombre está vacío
+     * @throws ResourceAlreadyExistsException si ya existe un ingrediente con el mismo nombre
+     */
     @Transactional
     public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
         logger.info("Iniciando creación de nuevo ingrediente: {}", ingredientRequest.getName());
         
+        if (ingredientRequest.getName() == null || ingredientRequest.getName().trim().isEmpty()) {
+            logger.error("Intento de crear ingrediente con nombre vacío");
+            throw new InvalidRequestException("El nombre del ingrediente no puede estar vacío");
+        }
+
         if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
             logger.warn("Intento de crear ingrediente duplicado: {}", ingredientRequest.getName());
-            throw new ResourceAlreadyExistsException("El ingrediente ya existe");
+            throw new ResourceAlreadyExistsException("El ingrediente " + ingredientRequest.getName() + " ya existe");
         }
 
         Ingredient ingredient = new Ingredient();
-        ingredient.setName(ingredientRequest.getName());
+        ingredient.setName(ingredientRequest.getName().trim().toUpperCase());
         ingredient.setUnit_measure(ingredientRequest.getUnitMeasure());
         ingredient.setActive(true);
 
@@ -90,6 +144,16 @@ public class IngredientService {
         return ingredientMapper.toDto(savedIngredient);
     }
 
+    /**
+     * Actualiza un ingrediente existente.
+     *
+     * @param id ID del ingrediente a actualizar
+     * @param ingredientRequest Datos del ingrediente actualizado
+     * @return Ingrediente actualizado convertido a DTO
+     * @throws InvalidRequestException si el nombre está vacío
+     * @throws ResourceNotFoundException si el ingrediente no existe
+     * @throws ResourceAlreadyExistsException si ya existe otro ingrediente con el nuevo nombre
+     */
     @Transactional
     public IngredientDto updateIngredient(Long id, IngredientRequest ingredientRequest) {
         logger.info("Iniciando actualización de ingrediente ID: {}", id);
@@ -101,7 +165,7 @@ public class IngredientService {
                     return new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id);
                 });
 
-        String newName = ingredientRequest.getName().trim();
+        String newName = ingredientRequest.getName().trim().toUpperCase();
         if (!ingredient.getName().equalsIgnoreCase(newName) &&
                 ingredientRepository.existsByNameIgnoreCase(newName)) {
             logger.warn("Intento de actualización con nombre duplicado: {}", newName);

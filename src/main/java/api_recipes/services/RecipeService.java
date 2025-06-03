@@ -21,6 +21,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio que maneja todas las operaciones relacionadas con recetas.
+ * Incluye funcionalidades para crear, actualizar, eliminar y consultar recetas,
+ * así como la gestión de sus ingredientes y categorías.
+ *
+ * @author Sandy
+ * @version 1.0
+ */
 @Service
 public class RecipeService {
     private static final Logger logger = LoggerFactory.getLogger(RecipeService.class);
@@ -30,6 +38,14 @@ public class RecipeService {
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
 
+    /**
+     * Constructor del servicio de recetas.
+     *
+     * @param recipeRepository Repositorio de recetas
+     * @param recipeMapper Mapper para convertir entre entidades y DTOs
+     * @param categoryRepository Repositorio de categorías
+     * @param ingredientRepository Repositorio de ingredientes
+     */
     public RecipeService(RecipeRepository recipeRepository,  RecipeMapper recipeMapper, CategoryRepository categoryRepository,
                          IngredientRepository ingredientRepository) {
         this.recipeRepository = recipeRepository;
@@ -38,13 +54,25 @@ public class RecipeService {
         this.ingredientRepository = ingredientRepository;
     }
 
-
+    /**
+     * Obtiene una página de recetas.
+     *
+     * @param pageable Configuración de paginación
+     * @return Página de recetas convertidas a DTOs
+     */
     public Page<RecipeDto> getAllRecipes(Pageable pageable) {
         logger.info("Obteniendo todas las recetas paginadas");
         Page<Recipe> recipePage = recipeRepository.findAllWithRelationships(pageable);
         return recipePage.map(recipe -> recipeMapper.toDTO(recipe));
     }
 
+    /**
+     * Obtiene una receta por su ID.
+     *
+     * @param id ID de la receta a buscar
+     * @return Receta convertida a DTO
+     * @throws ResourceNotFoundException si la receta no existe
+     */
     public RecipeDto getRecipeById(Long id) {
         logger.info("Buscando receta por ID: {}", id);
         return recipeRepository.findById(id)
@@ -64,7 +92,13 @@ public class RecipeService {
                 });
     }
 
-
+    /**
+     * Obtiene una receta por su título.
+     *
+     * @param title Título de la receta a buscar
+     * @return Receta convertida a DTO
+     * @throws ResourceNotFoundException si la receta no existe
+     */
     public RecipeDto getRecipeByTitle(String title) {
         logger.info("Buscando receta por título: {}", title);
         return recipeRepository.findByTitle(title)
@@ -75,7 +109,14 @@ public class RecipeService {
                 });
     }
 
-    //crear receta
+    /**
+     * Crea una nueva receta.
+     *
+     * @param recipeRequest Datos de la receta a crear
+     * @param user Usuario que crea la receta
+     * @return Receta creada convertida a DTO
+     * @throws ResourceAlreadyExistsException si ya existe una receta con el mismo título
+     */
     @Transactional
     public RecipeDto createRecipe( RecipeRequest recipeRequest, User user) {
         logger.info("Iniciando creación de nueva receta: {} por usuario: {}", recipeRequest.getTitle(), user.getUsername());
@@ -111,7 +152,14 @@ public class RecipeService {
         return recipeMapper.toDTO(savedRecipe);
     }
 
-    //delete
+    /**
+     * Elimina una receta.
+     *
+     * @param recipeId ID de la receta a eliminar
+     * @param user Usuario que intenta eliminar la receta
+     * @throws ResourceNotFoundException si la receta no existe
+     * @throws AccessDeniedException si el usuario no tiene permiso para eliminar la receta
+     */
     @Transactional
     public void deleteRecipe(Long recipeId, User user) {
         logger.info("Iniciando eliminación de receta ID: {} por usuario: {}", recipeId, user.getUsername());
@@ -131,8 +179,17 @@ public class RecipeService {
         logger.info("Receta eliminada exitosamente - ID: {}", recipeId);
     }
 
-
-    //update
+    /**
+     * Actualiza una receta existente.
+     *
+     * @param recipeId ID de la receta a actualizar
+     * @param recipeRequest Nuevos datos de la receta
+     * @param user Usuario que intenta actualizar la receta
+     * @return Receta actualizada convertida a DTO
+     * @throws ResourceNotFoundException si la receta no existe
+     * @throws AccessDeniedException si el usuario no tiene permiso para actualizar la receta
+     * @throws ResourceAlreadyExistsException si ya existe otra receta con el nuevo título
+     */
     @Transactional
     public RecipeDto updateRecipe(Long recipeId, RecipeRequest recipeRequest, User user) {
         logger.info("Iniciando actualización de receta ID: {} por usuario: {}", recipeId, user.getUsername());
@@ -177,6 +234,12 @@ public class RecipeService {
 
     //METODOS
 
+    /**
+     * Actualiza la información básica de una receta.
+     *
+     * @param recipe Receta a actualizar
+     * @param request Datos de actualización
+     */
     private void updateInfo(Recipe recipe, RecipeRequest request) {
         logger.debug("Actualizando información básica de la receta - ID: {}", recipe.getId());
         recipe.setTitle(request.getTitle());
@@ -185,6 +248,12 @@ public class RecipeService {
         recipe.setStatus(Recipe.RecipeStatus.PENDING);
     }
 
+    /**
+     * Valida que no haya ingredientes duplicados en la receta.
+     *
+     * @param ingredients Lista de ingredientes a validar
+     * @throws InvalidRequestException si hay ingredientes duplicados
+     */
     private void validateUniqueIngredients(Set<RecipeIngredientRequest> ingredients) {
         logger.debug("Validando ingredientes únicos");
         Set<Long> uniqueIds = new HashSet<>();
@@ -197,7 +266,12 @@ public class RecipeService {
         }
     }
 
-
+    /**
+     * Actualiza los ingredientes de una receta.
+     *
+     * @param recipe Receta a actualizar
+     * @param ingredientRequests Lista de ingredientes a asignar
+     */
     private void updateRecipeIngredients(Recipe recipe, Set<RecipeIngredientRequest> ingredientRequests) {
         logger.debug("Actualizando ingredientes de la receta - ID: {}", recipe.getId());
         Set<RecipeIngredient> existingIngredients = recipe.getRecipeIngredients();
@@ -234,6 +308,12 @@ public class RecipeService {
         }
     }
 
+    /**
+     * Actualiza las categorías de una receta.
+     *
+     * @param recipe Receta a actualizar
+     * @param categories Lista de nombres de categorías a asignar
+     */
     private void updateRecipeCategories(Recipe recipe,  Set<String> categories){
         logger.debug("Actualizando categorías de la receta - ID: {}", recipe.getId());
 
@@ -255,6 +335,14 @@ public class RecipeService {
         recipe.setCategories(existingCategories);
     }
 
+    /**
+     * Actualiza la URL de la imagen de una receta.
+     *
+     * @param id ID de la receta
+     * @param imageUrl Nueva URL de la imagen
+     * @return Receta actualizada convertida a DTO
+     * @throws ResourceNotFoundException si la receta no existe
+     */
     @Transactional
     public void updateRecipeImage(Long id, String imageUrl) {
         logger.info("Actualizando imagen de receta - ID: {}", id);
