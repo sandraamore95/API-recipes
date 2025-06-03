@@ -4,6 +4,9 @@ import api_recipes.payload.request.UserRequest;
 import api_recipes.payload.response.SuccessResponse;
 import api_recipes.services.UserService;
 import jakarta.validation.Valid;
+
+import java.io.IOException;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,8 +44,9 @@ public class UserController {
 
     // Eliminar un usuario
     @DeleteMapping("/{id}")
-    public ResponseEntity<SuccessResponse> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    public ResponseEntity<SuccessResponse> deleteUser(@PathVariable Long id) throws IOException {
+        // Eliminar todas las relaciones que tiene user  + eliminar la imagen
+        userService.deleteUserAndRelations(id);
         return ResponseEntity.ok(new SuccessResponse("Usuario eliminado correctamente"));
     }
 }

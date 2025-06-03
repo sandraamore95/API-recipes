@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 
 import java.util.Optional;
@@ -21,6 +22,8 @@ public interface RecipeRepository  extends JpaRepository <Recipe, Long>{
             "LEFT JOIN FETCH r.recipeIngredients ri " +
             "LEFT JOIN FETCH ri.ingredient")
     Page<Recipe> findAllWithRelationships(Pageable pageable);
+
+    List<Recipe> findByUserId(Long userId);
 
     @Modifying
     @Query("UPDATE Recipe r SET r.popularity = r.popularity + 1 WHERE r.id = :id")

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -63,6 +64,14 @@ public class RecipeController {
     public ResponseEntity<RecipeDto> getRecipeByTitle(@PathVariable String title) {
         RecipeDto recipe = recipeService.getRecipeByTitle(title);
         return ResponseEntity.ok(recipe);
+    }
+
+    // Get all recipes by user id
+    @GetMapping("/user")
+    public ResponseEntity<List<RecipeDto>> getRecipesByUserId(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        User user = getAuthenticatedUser(userDetails);
+        List<RecipeDto> recipes = recipeService.getRecipesByUserId(user.getId());
+        return ResponseEntity.ok(recipes);
     }
 
     @PostMapping

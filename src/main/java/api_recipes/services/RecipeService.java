@@ -216,4 +216,18 @@ public class RecipeService {
         recipe.setImageUrl(imageUrl);
         recipeRepository.save(recipe);
     }
+
+
+    public List<RecipeDto> getRecipesByUserId(Long userId) {
+  
+       // Verificar si el usuario tiene recetas
+       if (recipeRepository.findByUserId(userId).isEmpty()) {
+        throw new ResourceNotFoundException("El usuario con ID: " + userId + " no tiene recetas");
+       }
+
+       // Obtener todas las recetas del usuario
+       List<Recipe> recipes = recipeRepository.findByUserId(userId);
+
+       return recipes.stream().map(recipeMapper::toDTO).collect(Collectors.toList());
+    }
 }
