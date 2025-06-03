@@ -47,7 +47,9 @@ API-recipes es una aplicación backend robusta desarrollada con Spring Boot que 
 - **Lenguaje**: Java 21
 - **Base de Datos**: MySQL
 - **Seguridad**: Spring Security + JWT
-- **Documentación**: SpringDoc OpenAPI
+- **Documentación**: 
+  - SpringDoc OpenAPI (Swagger)
+  - JavaDoc
 - **Herramientas**:
   - Maven
   - Lombok
@@ -110,6 +112,23 @@ MAIL_PASSWORD=tu_contraseña
 ```
 
 ## 📚 Documentación API
+
+### Swagger UI
+La documentación interactiva de la API está disponible a través de Swagger UI en:
+```
+http://localhost:8080/swagger-ui.html
+```
+
+### JavaDoc
+La documentación del código está disponible en:
+```
+target/site/apidocs/index.html
+```
+
+Para generar la documentación JavaDoc:
+```bash
+mvn javadoc:javadoc
+```
 
 ### Endpoints Principales
 
