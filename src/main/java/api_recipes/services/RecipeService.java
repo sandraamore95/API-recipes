@@ -207,9 +207,8 @@ public class RecipeService {
             throw new AccessDeniedException("No tienes permiso para editar esta receta");
         }
 
-        // Verificar si la receta ya existe y no es su propia reecta
-        Optional<Recipe> existingRecipe = recipeRepository.findByTitle(recipeRequest.getTitle());
-        if (existingRecipe.isPresent() && !existingRecipe.get().getId().equals(recipe.getId())) {
+        // Verificar si la receta ya existe y no es su propia receta
+        if (recipeRepository.existsByTitleAndIdNot(recipeRequest.getTitle(), recipeId)) {
             logger.warn("Intento de actualización con título duplicado: {}", recipeRequest.getTitle());
             throw new ResourceAlreadyExistsException("La receta con el título '" + recipeRequest.getTitle() + "' ya existe.");
         }
@@ -359,7 +358,6 @@ public class RecipeService {
        if (recipeRepository.findByUserId(userId).isEmpty()) {
         throw new ResourceNotFoundException("El usuario con ID: " + userId + " no tiene recetas");
        }
-
        // Obtener todas las recetas del usuario
        List<Recipe> recipes = recipeRepository.findByUserId(userId);
 

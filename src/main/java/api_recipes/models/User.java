@@ -41,7 +41,7 @@ public class User {
      * No puede estar vacío y debe tener entre 3 y 20 caracteres.
      */
     @NotBlank
-    @Size(min = 3, max = 20)
+    @Size( max = 20)
     @Column(nullable = false)
     private String username;
 
@@ -60,7 +60,7 @@ public class User {
      * No puede estar vacía y debe tener entre 6 y 40 caracteres.
      */
     @NotBlank
-    @Size(min = 6, max = 40)
+    @Size(max = 120)
     @Column(nullable = false)
     private String password;
 

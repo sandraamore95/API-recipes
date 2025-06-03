@@ -13,6 +13,14 @@ import api_recipes.repository.UserRepository;
 import api_recipes.security.services.UserDetailsImpl;
 import api_recipes.services.ImageUploadService;
 import api_recipes.services.RecipeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +37,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipes")
+@Tag(name = "Recetas", description = "APIs para gestionar recetas")
+@SecurityRequirement(name = "Bearer Authentication")
 public class RecipeController {
 
     private final RecipeService recipeService;
@@ -47,26 +57,45 @@ public class RecipeController {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
+    @Operation(summary = "Obtener todas las recetas", description = "Retorna una página de recetas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Recetas encontradas", content = @Content(schema = @Schema(implementation = Page.class))),
+            @ApiResponse(responseCode = "400", description = "Parámetros de paginación inválidos")
+    })
     @GetMapping
     public ResponseEntity<Page<RecipeDto>> getAllRecipes(
-            @PageableDefault(size = 10, sort = "title") Pageable pageable) {
+            @Parameter(description = "Configuración de paginación") @PageableDefault(size = 10, sort = "title") Pageable pageable) {
         Page<RecipeDto> recipes = recipeService.getAllRecipes(pageable);
         return ResponseEntity.ok(recipes);
     }
 
+    @Operation(summary = "Obtener receta por ID", description = "Retorna una receta específica por su ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Receta encontrada", content = @Content(schema = @Schema(implementation = RecipeDto.class))),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<RecipeDto> getRecipeById(@PathVariable Long id) {
         RecipeDto recipe = recipeService.getRecipeById(id);
         return ResponseEntity.ok(recipe);
     }
 
+    @Operation(summary = "Obtener receta por título", description = "Retorna una receta específica por su título")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Receta encontrada", content = @Content(schema = @Schema(implementation = RecipeDto.class))),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada")
+    })
     @GetMapping("/title/{title}")
     public ResponseEntity<RecipeDto> getRecipeByTitle(@PathVariable String title) {
         RecipeDto recipe = recipeService.getRecipeByTitle(title);
         return ResponseEntity.ok(recipe);
     }
 
-    // Get all recipes by user id
+    @Operation(summary = "Obtener recetas del usuario", description = "Retorna todas las recetas del usuario autenticado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Recetas encontradas", content = @Content(schema = @Schema(implementation = List.class))),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+    })
     @GetMapping("/user")
     public ResponseEntity<List<RecipeDto>> getRecipesByUserId(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         User user = getAuthenticatedUser(userDetails);
@@ -74,6 +103,12 @@ public class RecipeController {
         return ResponseEntity.ok(recipes);
     }
 
+    @Operation(summary = "Crear receta", description = "Crea una nueva receta")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Receta creada exitosamente", content = @Content(schema = @Schema(implementation = RecipeDto.class))),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "409", description = "Ya existe una receta con ese título")
+    })
     @PostMapping
     public ResponseEntity<RecipeDto> createRecipe(
             @Valid @RequestBody RecipeRequest recipeRequest,
@@ -83,21 +118,37 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRecipe);
     }
 
+    @Operation(summary = "Actualizar receta", description = "Actualiza una receta existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Receta actualizada exitosamente", content = @Content(schema = @Schema(implementation = RecipeDto.class))),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "403", description = "No tienes permiso para editar esta receta"),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada"),
+            @ApiResponse(responseCode = "409", description = "Ya existe otra receta con ese título")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<RecipeDto> updateRecipe(
-            @PathVariable Long id,
-            @Valid @RequestBody RecipeRequest recipeRequest,
-            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+            @Parameter(description = "ID de la receta", required = true) @PathVariable Long id,
+            @Parameter(description = "Datos actualizados de la receta", required = true) @Valid @RequestBody RecipeRequest recipeRequest,
+            @Parameter(description = "Usuario autenticado", hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         User user = getAuthenticatedUser(userDetails);
         RecipeDto updatedRecipe = recipeService.updateRecipe(id, recipeRequest, user);
         return ResponseEntity.ok(updatedRecipe);
     }
 
+    @Operation(summary = "Subir imagen de receta", description = "Sube una imagen para una receta específica")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Imagen subida exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Archivo inválido"),
+            @ApiResponse(responseCode = "403", description = "No tienes permiso para modificar esta receta"),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada")
+    })
     @PatchMapping("/{id}/upload-image")
     public ResponseEntity<SuccessResponse> uploadImage(
-            @PathVariable Long id,
-            @RequestParam("image") MultipartFile file,
-            @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
+            @Parameter(description = "ID de la receta", required = true) @PathVariable Long id,
+            @Parameter(description = "Archivo de imagen", required = true) @RequestParam("image") MultipartFile file,
+            @Parameter(description = "Usuario autenticado", hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails)
+            throws IOException {
         User user = getAuthenticatedUser(userDetails);
         Recipe recipe = recipeService.getRecipeEntityById(id);
 
@@ -121,11 +172,17 @@ public class RecipeController {
         return ResponseEntity.ok(new SuccessResponse("Imagen subida con éxito"));
     }
 
-
+    @Operation(summary = "Eliminar receta", description = "Elimina una receta específica")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Receta eliminada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "No tienes permiso para eliminar esta receta"),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<SuccessResponse> deleteRecipe(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
+            @Parameter(description = "ID de la receta", required = true) @PathVariable Long id,
+            @Parameter(description = "Usuario autenticado", hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails)
+            throws IOException {
         User user = getAuthenticatedUser(userDetails);
         Recipe recipe = recipeService.getRecipeEntityById(id);
 

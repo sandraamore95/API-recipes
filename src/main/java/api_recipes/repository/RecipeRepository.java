@@ -29,4 +29,6 @@ public interface RecipeRepository  extends JpaRepository <Recipe, Long>{
     @Query("UPDATE Recipe r SET r.popularity = r.popularity + 1 WHERE r.id = :id")
     void incrementPopularity(@Param("id") Long id);
 
+    boolean existsByTitleAndIdNot(String title, Long recipeId);
+
 }

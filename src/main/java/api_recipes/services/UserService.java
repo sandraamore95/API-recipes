@@ -16,9 +16,6 @@ import api_recipes.repository.TokenUserRepository;
 import api_recipes.repository.UserRepository;
 import api_recipes.repository.FavoriteRepository;
 import api_recipes.repository.RecipeRepository;
-import api_recipes.services.RecipeService;
-import api_recipes.services.ImageUploadService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -28,9 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -182,18 +176,20 @@ public class UserService {
                     return new ResourceNotFoundException("Usuario no encontrado");
                 });
 
-        if (!user.getUsername().equals(userRequest.getUsername()) &&
-                userRepository.existsByUsername(userRequest.getUsername())) {
-            logger.warn("Intento de actualización con username duplicado: {}", userRequest.getUsername());
-            throw new ResourceAlreadyExistsException("El nombre de usuario ya está en uso");
+        // Validar que no exista el username en otro usuario y que no sea el mismo usuario
+        if (userRepository.existsByUsernameAndIdNot(userRequest.getUsername(), id)){
+                logger.warn("Intento de actualización con username duplicado: {}", userRequest.getUsername());
+                throw new ResourceAlreadyExistsException("El nombre de usuario ya está en uso");
+            
         }
 
-        if (!user.getEmail().equals(userRequest.getEmail()) &&
-                userRepository.existsByEmail(userRequest.getEmail())) {
-            logger.warn("Intento de actualización con email duplicado: {}", userRequest.getEmail());
-            throw new ResourceAlreadyExistsException("El email ya está en uso");
-        }
+        // Validar email
+       if (userRepository.existsByEmailAndIdNot(userRequest.getEmail(), id)){
+        logger.warn("Intento de actualización con email duplicado: {}", userRequest.getEmail());
+        throw new ResourceAlreadyExistsException("El email ya está en uso");
+       }
 
+        // Si llegamos aquí, podemos actualizar los campos
         user.setUsername(userRequest.getUsername());
         user.setEmail(userRequest.getEmail());
 

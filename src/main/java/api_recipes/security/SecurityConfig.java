@@ -93,6 +93,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/recipes").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/recipes/{id}/upload-image").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/recipes").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/recipes/user").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/recipes/**").authenticated()
 
                         // Endpoints de favoritos

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
@@ -12,4 +13,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Set<Category> findByNameIn(Set<String> names);
 
     boolean existsByNameIgnoreCase(String name);
+
+    Optional<Category> findByName(String name);
+
+    boolean existsByName(String name);
 }
