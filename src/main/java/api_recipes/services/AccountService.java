@@ -1,6 +1,7 @@
 package api_recipes.services;
 
 import api_recipes.exceptions.ExpiredTokenException;
+import api_recipes.exceptions.InvalidCurrentPasswordException;
 import api_recipes.exceptions.InvalidTokenException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
@@ -213,7 +214,10 @@ public class AccountService {
 
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             logger.warn("Contraseña actual incorrecta para usuario: {}", user.getUsername());
-            throw new IllegalArgumentException("La contraseña actual es incorrecta");
+            throw new InvalidCurrentPasswordException("La contraseña actual es incorrecta");
+        }
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("La nueva contraseña no puede ser igual a la actual");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));

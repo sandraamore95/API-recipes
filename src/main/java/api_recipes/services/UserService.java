@@ -1,5 +1,6 @@
 package api_recipes.services;
 
+import api_recipes.exceptions.ImageProcessingException;
 import api_recipes.exceptions.InvalidRequestException;
 import api_recipes.exceptions.ResourceAlreadyExistsException;
 import api_recipes.exceptions.ResourceNotFoundException;
@@ -208,10 +209,10 @@ public class UserService {
      *
      * @param userId ID del usuario a eliminar
      * @throws ResourceNotFoundException si el usuario no existe
-     * @throws IOException si hay un error al eliminar archivos asociados
+     * @throws ImageProcessingException si hay un error al eliminar archivos asociados
      */
     @Transactional
-    public void deleteUserAndRelations(Long userId) throws IOException {
+    public void deleteUserAndRelations(Long userId)  {
         logger.info("Iniciando eliminación de usuario y sus relaciones - ID: {}", userId);
         
         User deleteUser = userRepository.findById(userId)
@@ -235,7 +236,7 @@ public class UserService {
                     logger.debug("Imagen de receta eliminada - ID: {}", recipe.getId());
                 } catch (IOException e) {
                     logger.error("Error al eliminar imagen de receta - ID: {}, Error: {}", recipe.getId(), e.getMessage());
-                    throw new IOException("Error al eliminar la imagen de la receta: " + e.getMessage());
+                    throw new ImageProcessingException("Error al eliminar la imagen de la receta: " + e.getMessage());
                 }
             }
         }

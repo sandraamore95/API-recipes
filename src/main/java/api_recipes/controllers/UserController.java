@@ -90,7 +90,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<SuccessResponse> deleteUser(@PathVariable Long id) throws IOException {
+    public ResponseEntity<SuccessResponse> deleteUser(@PathVariable Long id) {
             // Eliminar todas las relaciones que tiene user  + eliminar la imagen
         userService.deleteUserAndRelations(id);
         return ResponseEntity.ok(new SuccessResponse("Usuario eliminado correctamente"));

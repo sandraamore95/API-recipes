@@ -8,6 +8,8 @@ import api_recipes.models.Ingredient;
 import api_recipes.payload.dto.IngredientDto;
 import api_recipes.payload.request.IngredientRequest;
 import api_recipes.repository.IngredientRepository;
+import api_recipes.repository.RecipeRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class IngredientService {
     private static final Logger logger = LoggerFactory.getLogger(IngredientService.class);
     private final IngredientRepository ingredientRepository;
     private final IngredientMapper ingredientMapper;
+    private final RecipeRepository recipeRepository;
 
     /**
      * Constructor del servicio de ingredientes.
@@ -36,9 +39,10 @@ public class IngredientService {
      * @param ingredientRepository Repositorio de ingredientes
      * @param ingredientMapper Mapper para convertir entre entidades y DTOs
      */
-    public IngredientService(IngredientRepository ingredientRepository, IngredientMapper ingredientMapper) {
+    public IngredientService(IngredientRepository ingredientRepository, IngredientMapper ingredientMapper, RecipeRepository recipeRepository) {
         this.ingredientRepository = ingredientRepository;
         this.ingredientMapper = ingredientMapper;
+        this.recipeRepository = recipeRepository;
     }
 
     /**
@@ -124,11 +128,7 @@ public class IngredientService {
     public IngredientDto createIngredient(IngredientRequest ingredientRequest) {
         logger.info("Iniciando creación de nuevo ingrediente: {}", ingredientRequest.getName());
         
-        if (ingredientRequest.getName() == null || ingredientRequest.getName().trim().isEmpty()) {
-            logger.error("Intento de crear ingrediente con nombre vacío");
-            throw new InvalidRequestException("El nombre del ingrediente no puede estar vacío");
-        }
-
+        
         if (ingredientRepository.existsByNameIgnoreCase(ingredientRequest.getName().trim())) {
             logger.warn("Intento de crear ingrediente duplicado: {}", ingredientRequest.getName());
             throw new ResourceAlreadyExistsException("El ingrediente " + ingredientRequest.getName() + " ya existe");
@@ -185,9 +185,9 @@ public class IngredientService {
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
 
-        // Si ya esta activado no se hace nada
-        if (!ingredient.isActive()) {
-            return;
+        // Si una receta tiene este ingrediente, no se puede desactivar
+        if (!ingredient.isActive() && recipeRepository.existsByIngredientsId(id)) {
+            throw new InvalidRequestException("No se puede desactivar un ingrediente en uso");
         }
 
         ingredient.setActive(false);
