@@ -22,6 +22,8 @@ API-recipes es una aplicación backend robusta desarrollada con Spring Boot que 
   - Registro y autenticación
   - Sistema de roles y permisos
   - Gestión de perfiles
+  - Restablecimiento de contraseña vía email
+  - Cambio de email y contraseña
 
 - **Gestión de Recetas**
   - CRUD completo de recetas
@@ -55,6 +57,7 @@ API-recipes es una aplicación backend robusta desarrollada con Spring Boot que 
   - Lombok
   - MapStruct
   - JPA/Hibernate
+- **Email**: JavaMailSender para notificaciones
 
 ## 📂 Estructura del Proyecto
 ```
@@ -73,6 +76,7 @@ src/main/java/api_recipes/
 - Java 21 o superior
 - MySQL 8.0 o superior
 - Maven 3.6 o superior
+- Servidor SMTP para envío de emails
 
 ## 🚀 Instalación
 
@@ -92,6 +96,14 @@ CREATE DATABASE recipes_db;
 spring.datasource.url=jdbc:mysql://localhost:3306/recipes_db
 spring.datasource.username=tu_usuario
 spring.datasource.password=tu_contraseña
+
+# Configuración de email
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=tu_email
+spring.mail.password=tu_contraseña
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
 ```
 
 4. **Compilar y ejecutar**
@@ -109,6 +121,7 @@ MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=tu_email
 MAIL_PASSWORD=tu_contraseña
+APP_BASE_URL=http://localhost:8080
 ```
 
 ## 📚 Documentación API
@@ -136,11 +149,17 @@ mvn javadoc:javadoc
 - `POST /api/auth/register` - Registro de usuario
 - `POST /api/auth/login` - Inicio de sesión
 - `POST /api/auth/refresh` - Refrescar token
+- `POST /api/auth/forgot-password` - Solicitar restablecimiento de contraseña
+- `POST /api/auth/reset-password` - Restablecer contraseña con token
+
+#### Cuenta
+- `PATCH /api/account/change-email` - Cambiar email
+- `PATCH /api/account/change-password` - Cambiar contraseña
 
 #### Recetas
 - `GET /api/recipes` - Listar recetas
-- `GET /api/recipes/{id}` - Obtener receta
 - `POST /api/recipes` - Crear receta
+- `GET /api/recipes/{id}` - Obtener receta
 - `PUT /api/recipes/{id}` - Actualizar receta
 - `PATCH /api/recipes/{id}/upload-image` - Actualizar imagen receta
 - `DELETE /api/recipes/{id}` - Eliminar receta
@@ -164,6 +183,10 @@ mvn javadoc:javadoc
 - Protección contra CSRF
 - Validación de tokens
 - Encriptación de contraseñas
+- Sistema de restablecimiento de contraseña seguro
+  - Tokens únicos y expirables (24 horas)
+  - Notificación por email
+  - Validación de tokens
 
 
 
