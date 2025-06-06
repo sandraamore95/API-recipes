@@ -7,5 +7,6 @@ public interface IngredientRepository  extends JpaRepository<Ingredient, Long> {
 
     List<Ingredient> findByNameContainingIgnoreCase(String name);
     boolean existsByNameIgnoreCase(String name);
+    
 
 }

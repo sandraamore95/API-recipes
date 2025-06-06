@@ -186,7 +186,7 @@ public class IngredientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ingrediente no encontrado con ID: " + id));
 
         // Si una receta tiene este ingrediente, no se puede desactivar
-        if (!ingredient.isActive() && recipeRepository.existsByIngredientsId(id)) {
+        if (!ingredient.isActive() && recipeRepository.existsByRecipeIngredients_Ingredient_Id(id)) {
             throw new InvalidRequestException("No se puede desactivar un ingrediente en uso");
         }
 

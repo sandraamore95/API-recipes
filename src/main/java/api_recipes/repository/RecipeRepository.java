@@ -31,6 +31,6 @@ public interface RecipeRepository  extends JpaRepository <Recipe, Long>{
 
     boolean existsByTitleAndIdNot(String title, Long recipeId);
 
-    boolean existsByIngredientsId(Long id);
+    boolean existsByRecipeIngredients_Ingredient_Id(Long ingredientId);
 
 }
